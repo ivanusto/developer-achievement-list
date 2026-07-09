@@ -1296,6 +1296,37 @@
             text-align: center;
             line-height: 1.5;
         }
+
+        .lang-switch-container {
+            display: inline-flex;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .btn-lang {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-lang.active {
+            background: var(--border-color-active);
+            color: #fff !important;
+        }
+
+        .btn-lang:hover:not(.active) {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
     </style>
 </head>
 <body>
@@ -1310,10 +1341,10 @@
                 <p data-i18n="subtitle">點亮技術版圖 • 解鎖專業徽章 • 完成你的工程師修仙手帳</p>
             </div>
             <div class="header-controls">
-                <select id="langSelector" class="select-filter" style="width: auto;" onchange="changeLanguage(this.value)">
-                    <option value="zh-TW">繁體中文</option>
-                    <option value="en">English</option>
-                </select>
+                <div class="lang-switch-container">
+                    <button class="btn-lang" id="lang-zh" onclick="changeLanguage('zh-TW')">繁體中文</button>
+                    <button class="btn-lang" id="lang-en" onclick="changeLanguage('en')">English</button>
+                </div>
                 <button class="btn btn-accent" onclick="generateShareCard()">
                     <span>📤</span> <span data-i18n="shareCardBtn">分享成就卡</span>
                 </button>
@@ -1440,6 +1471,7 @@
     <!-- FOOTER -->
     <footer>
         <div class="footer-social-links">
+            <a href="https://ivanusto.github.io/life_achievement_list/" target="_blank" rel="noreferrer noopener">🌱 人生成就系統</a>
             <a href="https://github.com/ivanusto/taiwan-travel-achievement-list" target="_blank" rel="noreferrer noopener">🗺️ 台灣旅行成就系統</a>
         </div>
         <div class="footer-credit" data-i18n="footerCredit">
@@ -1961,8 +1993,6 @@
             if (!appState.language) {
                 appState.language = "zh-TW";
             }
-            const langSelect = document.getElementById('langSelector');
-            if (langSelect) langSelect.value = appState.language;
 
             document.documentElement.setAttribute('data-theme', appState.theme);
             const themeBtnText = document.getElementById('themeToggleText');
@@ -3375,6 +3405,19 @@
             renderCustomAchievements();
             renderRadarChart();
             if (typeof updateAchievementsUI === "function") updateAchievementsUI();
+
+            // Update language switcher buttons active states
+            const btnZh = document.getElementById('lang-zh');
+            const btnEn = document.getElementById('lang-en');
+            if (btnZh && btnEn) {
+                if (appState.language === 'en') {
+                    btnEn.classList.add('active');
+                    btnZh.classList.remove('active');
+                } else {
+                    btnZh.classList.add('active');
+                    btnEn.classList.remove('active');
+                }
+            }
         }
 
         // --- 21. App Startup ---
