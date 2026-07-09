@@ -4,6 +4,8 @@
 
 An interactive milestone tracker, technology stack visualizer, and profile generator designed for software engineers, developers, and open-source contributors. Features a clean, editor-inspired tile aesthetic.
 
+🔗 **Live App**: [https://ivanusto.github.io/developer-achievement-list/](https://ivanusto.github.io/developer-achievement-list/)
+
 This is a fully static client-side web application. Your progress is saved automatically in your browser's local cache (LocalStorage). No signup or installation required!
 
 ---

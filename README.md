@@ -4,6 +4,8 @@
 
 一個結合 **成就系統**、**磁貼美學** 與 **代碼編輯器風格** 的個人技術足跡打卡與分享圖卡生成平台。為軟體工程師、開源愛好者與程式修仙者量身打造！
 
+🔗 **線上網址**: [https://ivanusto.github.io/developer-achievement-list/](https://ivanusto.github.io/developer-achievement-list/)
+
 本系統完全部署於雲端，玩家無需安裝任何程式或下載檔案，即可直接在瀏覽器中完成所有的打卡記錄，解鎖工程師生涯成就。
 
 ---
