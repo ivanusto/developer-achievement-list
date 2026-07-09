@@ -1342,9 +1342,17 @@
             </div>
             <div class="header-controls">
                 <div class="lang-switch-container">
-                    <button class="btn-lang" id="lang-zh" onclick="changeLanguage('zh-TW')">繁體中文</button>
-                    <button class="btn-lang" id="lang-en" onclick="changeLanguage('en')">English</button>
+                    <button class="btn-lang" id="lang-zh" onclick="changeLanguage('zh-TW')">繁中</button>
+                    <button class="btn-lang" id="lang-en" onclick="changeLanguage('en')">EN</button>
                 </div>
+                <select class="select-filter project-selector" id="projectSelector" onchange="if(this.value) window.open(this.value, '_self')" style="width: auto; font-weight: 700;">
+                    <option value="" disabled selected data-i18n="projectSelectorPlaceholder">❖ 更多成就系統...</option>
+                    <option value="https://ivanusto.github.io/life-achievement-list/" data-i18n="projectLifeLink">🌱 人生成就系統</option>
+                    <option value="https://ivanusto.github.io/developer-achievement-list/" data-i18n="projectDevLink">💻 開發者成就系統</option>
+                    <option value="https://ivanusto.github.io/taiwan-travel-achievement-list/" data-i18n="projectTaiwanLink">🗺️ 台灣旅行成就系統</option>
+                    <option value="https://ivanusto.github.io/japan-travel-achievement-list/" data-i18n="projectJapanLink">🗾 日本旅行成就系統</option>
+                    <option value="https://ivanusto.github.io/travel-achievement-list/" data-i18n="projectWorldLink">✈️ 觀光旅行成就系統</option>
+                </select>
                 <button class="btn btn-accent" onclick="generateShareCard()">
                     <span>📤</span> <span data-i18n="shareCardBtn">分享成就卡</span>
                 </button>
@@ -1470,14 +1478,35 @@
 
     <!-- FOOTER -->
     <footer>
-        <div class="footer-social-links">
-            <a href="https://ivanusto.github.io/life-achievement-list/" target="_blank" rel="noreferrer noopener">🌱 人生成就系統</a>
-            <a href="https://github.com/ivanusto/taiwan-travel-achievement-list" target="_blank" rel="noreferrer noopener">🗺️ 台灣旅行成就系統</a>
+        <div class="footer-social-links" style="flex-direction: column; gap: 12px; align-items: center; width: 100%;">
+            <div class="footer-projects-links" style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; font-size: 13px; font-weight: 700;">
+                <a href="https://ivanusto.github.io/life-achievement-list/">🌱 <span data-i18n="projectLifeLink">人生成就系統</span></a>
+                <span style="color: var(--border-color); user-select: none;">|</span>
+                <a href="https://ivanusto.github.io/developer-achievement-list/">💻 <span data-i18n="projectDevLink">開發者成就系統</span></a>
+                <span style="color: var(--border-color); user-select: none;">|</span>
+                <a href="https://ivanusto.github.io/taiwan-travel-achievement-list/">🗺️ <span data-i18n="projectTaiwanLink">台灣旅行成就系統</span></a>
+                <span style="color: var(--border-color); user-select: none;">|</span>
+                <a href="https://ivanusto.github.io/japan-travel-achievement-list/">🗾 <span data-i18n="projectJapanLink">日本旅行成就系統</span></a>
+                <span style="color: var(--border-color); user-select: none;">|</span>
+                <a href="https://ivanusto.github.io/travel-achievement-list/">✈️ <span data-i18n="projectWorldLink">觀光旅行成就系統</span></a>
+            </div>
+            <div class="footer-sns-links" style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; font-size: 13px; font-weight: 700; margin-top: 4px;">
+                <a href="https://yblog.org/" target="_blank" rel="noreferrer noopener">✍️ Yblog</a>
+                <span style="color: var(--border-color); user-select: none;">•</span>
+                <a href="https://www.threads.net/@ivanusto" target="_blank" rel="noreferrer noopener">🧵 Threads</a>
+                <span style="color: var(--border-color); user-select: none;">•</span>
+                <a href="https://x.com/ivanusto" target="_blank" rel="noreferrer noopener">🐦 X / Twitter</a>
+                <span style="color: var(--border-color); user-select: none;">•</span>
+                <a href="https://www.plurk.com/ivanusto" target="_blank" rel="noreferrer noopener">💬 Plurk</a>
+                <span style="color: var(--border-color); user-select: none;">•</span>
+                <a href="https://www.instagram.com/ivanusto/" target="_blank" rel="noreferrer noopener">📸 Instagram</a>
+                <span style="color: var(--border-color); user-select: none;">•</span>
+                <a href="https://www.facebook.com/ivanusto" target="_blank" rel="noreferrer noopener">👤 Facebook</a>
+            </div>
         </div>
-        <div class="footer-credit" data-i18n="footerCredit">
-            本專案受台灣旅行成就系統啟發，改造成為工程師/開發者專屬的成就系統。<br>
-            成就進度會自動儲存在您瀏覽器的本地快取（LocalStorage）中，隱私安全無虞。<br>
-            © 2026 Engineer Achievement List • ivanusto
+        <div class="footer-credit" data-i18n="footerCreditUnified">
+            © 2026 Life Achievement Lists • Created by ivanusto. All rights reserved.<br>
+            進度會自動儲存在您瀏覽器的本地快取（LocalStorage）中，無後端伺服器，確保您的隱私。
         </div>
     </footer>
 
@@ -2220,7 +2249,14 @@
                 "unlockBadgeToastTitle": "🏆 徽章解鎖！",
                 "unlockBadgeToastDesc": "您解鎖了【{badgeName}】徽章！",
                 "unlockAchToastTitle": "🌟 成就解鎖！",
-                "unlockAchToastDesc": "【{achName}】解鎖成功！"
+                "unlockAchToastDesc": "【{achName}】解鎖成功！",
+                "projectSelectorPlaceholder": "❖ 切換成就系統...",
+                "projectLifeLink": "人生成就系統",
+                "projectDevLink": "開發者成就系統",
+                "projectTaiwanLink": "台灣旅行成就系統",
+                "projectJapanLink": "日本旅行成就系統",
+                "projectWorldLink": "觀光旅行成就系統",
+                "footerCreditUnified": "© 2026 Life Achievement Lists • Created by ivanusto. All rights reserved.<br>進度會自動儲存在您瀏覽器的本地快取（LocalStorage）中，無後端伺服器，確保您的隱私。"
             },
             "en": {
                 "title": "Developer Achievement System",
@@ -2310,7 +2346,14 @@
                 "unlockBadgeToastTitle": "🏆 Badge Unlocked!",
                 "unlockBadgeToastDesc": "You unlocked the [{badgeName}] badge!",
                 "unlockAchToastTitle": "🌟 Milestone Unlocked!",
-                "unlockAchToastDesc": "[{achName}] unlocked successfully!"
+                "unlockAchToastDesc": "[{achName}] unlocked successfully!",
+                "projectSelectorPlaceholder": "❖ Switch Achievements...",
+                "projectLifeLink": "Life Achievements",
+                "projectDevLink": "Developer Achievements",
+                "projectTaiwanLink": "Taiwan Travel Achievements",
+                "projectJapanLink": "Japan Travel Achievements",
+                "projectWorldLink": "Global Travel Achievements",
+                "footerCreditUnified": "© 2026 Life Achievement Lists • Created by ivanusto. All rights reserved.<br>Progress is saved locally on your browser (LocalStorage) with complete privacy."
             }
         };
 
