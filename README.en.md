@@ -13,7 +13,7 @@ This is a fully static client-side web application. Your progress is saved autom
 ## 🌟 Key Features
 
 1. **Dashboard & Leveling System**: Calculates player levels (1 level per 10 achievements) and dynamic coder ranks (e.g., `🌱 Hello World Rookie`, `🐛 Bug Catcher`, `🌐 System Architect`, `🧙‍♂️ Software Arch-Mage`).
-2. **22-Node Tech Stack Grid**: An interactive technology grid representing 5 core engineering domains (Frontend, Backend, DevOps, CS & AI, and Tools). Click a technology to "light it up" and calculate your domain coverage.
+2. **24-Node Tech Stack Grid**: An interactive technology grid representing 5 core engineering domains (Frontend, Backend, DevOps, CS & AI, and Tools). Click a technology to "light it up" and calculate your domain coverage.
 3. **Canvas Radar Chart**: Rendered natively on HTML5 Canvas without any external JS dependencies, visualizing your domain mastery.
 4. **100 Relatable Milestones**: 100 achievements across 10 categories, ranging from basic syntax up to ultimate challenges (and Steam-style hidden achievements).
 5. **10 Developer Badges**: Wall of honor badges like `⌨️ Keyboard Warrior`, `🎨 Pixel Perfect`, `💾 Database Guru`, and `🔥 Server Down Survivor` unlocked based on your accomplishments.

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>開發者成就系統 | Developer Achievement System</title>
-    <meta name="description" content="100 項開發者成就打卡、22 大技術領域版圖、榮譽徽章牆與能力雷達圖，一鍵生成可分享的工程師成就卡。進度自動保存在瀏覽器，免安裝免註冊。">
+    <meta name="description" content="100 項開發者成就打卡、24 大技術領域版圖、榮譽徽章牆與能力雷達圖，一鍵生成可分享的工程師成就卡。進度自動保存在瀏覽器，免安裝免註冊。">
     <meta name="theme-color" content="#0d1117">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💻</text></svg>">
 
@@ -12,7 +12,7 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="開發者成就系統">
     <meta property="og:title" content="開發者成就系統 | Developer Achievement System">
-    <meta property="og:description" content="100 項開發者成就打卡、22 大技術領域版圖、榮譽徽章牆與能力雷達圖，一鍵生成你的工程師成就卡！">
+    <meta property="og:description" content="100 項開發者成就打卡、24 大技術領域版圖、榮譽徽章牆與能力雷達圖，一鍵生成你的工程師成就卡！">
     <meta property="og:image" content="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='630' viewBox='0 0 1200 630'><rect width='100%' height='100%' fill='%230d1117'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='60' font-weight='bold' fill='%2300f0ff'>💻 開發者成就系統</text></svg>">
     <meta property="og:locale" content="zh_TW">
     <meta name="twitter:card" content="summary_large_image">
@@ -1596,8 +1596,10 @@
             { id: "gorust", name: "Go/Rust", nameEn: "Go/Rust", domain: "Backend", domainEn: "Backend", row: 2, col: 3, color: "#00add8" },
             { id: "sql", name: "SQL DB", nameEn: "SQL DB", domain: "Backend", domainEn: "Backend", row: 2, col: 4, color: "#f29111" },
             { id: "nosql", name: "NoSQL DB", nameEn: "NoSQL DB", domain: "Backend", domainEn: "Backend", row: 2, col: 5, color: "#4db33d" },
+            { id: "php", name: "PHP", nameEn: "PHP", domain: "Backend", domainEn: "Backend", row: 3, col: 1, color: "#4f5b93" },
             { id: "git", name: "Git", nameEn: "Git", domain: "Tools", domainEn: "Tools", row: 3, col: 2, color: "#f05032" },
             { id: "vimshell", name: "Vim/Shell", nameEn: "Vim/Shell", domain: "Tools", domainEn: "Tools", row: 3, col: 4, color: "#4af626" },
+            { id: "dotnet", name: ".NET", nameEn: ".NET", domain: "Backend", domainEn: "Backend", row: 3, col: 5, color: "#512bd4" },
             { id: "linux", name: "Linux OS", nameEn: "Linux OS", domain: "DevOps", domainEn: "DevOps", row: 4, col: 1, color: "#fcc624" },
             { id: "docker", name: "Docker", nameEn: "Docker", domain: "DevOps", domainEn: "DevOps", row: 4, col: 2, color: "#2496ed" },
             { id: "kubernetes", name: "K8s", nameEn: "K8s", domain: "DevOps", domainEn: "DevOps", row: 4, col: 3, color: "#326ce5" },
@@ -1730,7 +1732,7 @@
             { id: 97, name: "完全自主重構屎山 🥾", nameEn: "Refactor Legacy Mountain 🥾", desc: "將公司內部的祖傳龐大屎山專案完全重構，且上線零事故。", descEn: "Re-architect a giant, undocumented legacy system without any outages.", diff: 5, rarity: "Legendary", cat: "極限挑戰", badgeId: "legend" },
             { id: 98, name: "白帽駭客滲透 🛡️", nameEn: "White-Hat Bounty 🛡️", desc: "發現大型網站或軟體的零日漏洞 (Zero-day)，獲得漏洞回報獎勵。", descEn: "Discover and report a zero-day vulnerability, earning a bug bounty.", diff: 5, rarity: "Legendary", cat: "極限挑戰", badgeId: "legend" },
             { id: 99, name: "全能工程師 (Solo Dev) 🧙‍♂️", nameEn: "Solo Developer Legend 🧙‍♂️", desc: "獨自包辦需求、前後端、資料庫、DevOps，上線一款完整的商業產品。", descEn: "Build, launch, and host a complete commercial app entirely on your own.", diff: 5, rarity: "Legendary", cat: "極限挑戰", badgeId: "legend" },
-            { id: 100, name: "終極足跡地圖制霸 🗺️", nameEn: "Stack Domain Conqueror 🗺️", desc: "涉足技術領域版圖的所有 22 個技術領域，將技術版圖點亮完成！", descEn: "Master/light up all 22 nodes on the tech stack grid footprint map!", diff: 6, rarity: "Legendary", cat: "極限挑戰" }
+            { id: 100, name: "終極足跡地圖制霸 🗺️", nameEn: "Stack Domain Conqueror 🗺️", desc: "涉足技術領域版圖的所有 22 個技術領域，將技術版圖點亮完成！", descEn: "Master/light up all 24 nodes on the tech stack grid footprint map!", diff: 6, rarity: "Legendary", cat: "極限挑戰" }
         ];
 
         // --- 3. App State Variables ---
@@ -3043,7 +3045,7 @@
             ctx.font = 'bold 24px sans-serif';
             ctx.fillStyle = isDark ? '#58a6ff' : '#0969da';
             const achPct = Math.round((cardTotals.completed / cardTotals.total) * 100);
-            const techPct = Math.round((appState.masteredTech.length / 22) * 100);
+            const techPct = Math.round((appState.masteredTech.length / techStackData.length) * 100);
             ctx.fillText(`${achPct}%`, 535, 230);
             ctx.fillText(`${techPct}%`, 675, 230);
 
@@ -3215,9 +3217,9 @@
             const techCount = appState.masteredTech.length;
             const lang = appState.language || 'zh-TW';
             if (lang === 'en') {
-                return `I unlocked ${totals.completed}/${totals.total} developer achievements and lit up ${techCount}/22 tech stack nodes! Challenge your engineering achievements here:`;
+                return `I unlocked ${totals.completed}/${totals.total} developer achievements and lit up ${techCount}/${techStackData.length} tech stack nodes! Challenge your engineering achievements here:`;
             }
-            return `我在「開發者成就系統」解鎖了 ${totals.completed}/${totals.total} 項成就、點亮 ${techCount}/22 大技術領域！快來挑戰你的程式修仙足跡 ✨`;
+            return `我在「開發者成就系統」解鎖了 ${totals.completed}/${totals.total} 項成就、點亮 ${techCount}/24 大技術領域！快來挑戰你的程式修仙足跡 ✨`;
         }
 
         function shareToSocial(platform) {
