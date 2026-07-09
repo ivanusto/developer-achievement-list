@@ -1,0 +1,3387 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>開發者成就系統 | Developer Achievement System</title>
+    <meta name="description" content="100 項開發者成就打卡、22 大技術領域版圖、榮譽徽章牆與能力雷達圖，一鍵生成可分享的工程師成就卡。進度自動保存在瀏覽器，免安裝免註冊。">
+    <meta name="theme-color" content="#0d1117">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💻</text></svg>">
+
+    <!-- Open Graph / Twitter social sharing cards -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="開發者成就系統">
+    <meta property="og:title" content="開發者成就系統 | Developer Achievement System">
+    <meta property="og:description" content="100 項開發者成就打卡、22 大技術領域版圖、榮譽徽章牆與能力雷達圖，一鍵生成你的工程師成就卡！">
+    <meta property="og:image" content="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='630' viewBox='0 0 1200 630'><rect width='100%' height='100%' fill='%230d1117'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='60' font-weight='bold' fill='%2300f0ff'>💻 開發者成就系統</text></svg>">
+    <meta property="og:locale" content="zh_TW">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+
+    <script>
+        // Apply saved theme before first paint
+        try {
+            const savedState = JSON.parse(localStorage.getItem('engineer_achievements_state'));
+            if (savedState && savedState.theme) document.documentElement.setAttribute('data-theme', savedState.theme);
+        } catch (e) {}
+    </script>
+    <style>
+        :root {
+            /* Dark Theme (Default Cyberpunk-IDE) */
+            --bg-primary: #0d1117;
+            --bg-card: #161b22;
+            --bg-card-hover: #21262d;
+            --border-color: #30363d;
+            --border-color-active: #58a6ff;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --text-muted: #484f58;
+            --accent-red: #ff3e00;
+            --accent-blue: #58a6ff;
+            --accent-gold: #f1c40f;
+            --accent-purple: #ab47bc;
+            --accent-green: #3fb950;
+            --shadow-primary: rgba(0, 0, 0, 0.6);
+            --shadow-glow: rgba(88, 166, 255, 0.2);
+            --washi-bg: radial-gradient(circle at 50% 50%, #161b22 0%, #0d1117 100%);
+            --header-gradient: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+            --font-mono: 'Fira Code', monospace;
+        }
+
+        [data-theme="light"] {
+            /* Light Theme (Code Editor Light) */
+            --bg-primary: #f6f8fa;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f3f4f6;
+            --border-color: #d0d7de;
+            --border-color-active: #0969da;
+            --text-primary: #24292f;
+            --text-secondary: #57606a;
+            --text-muted: #8c959f;
+            --accent-red: #cf222e;
+            --accent-blue: #0969da;
+            --accent-gold: #bf8700;
+            --accent-purple: #8250df;
+            --accent-green: #1a7f37;
+            --shadow-primary: rgba(140, 149, 159, 0.15);
+            --shadow-glow: rgba(9, 105, 218, 0.15);
+            --washi-bg: radial-gradient(circle at 50% 50%, #ffffff 0%, #f6f8fa 100%);
+            --header-gradient: linear-gradient(135deg, #ffffff 0%, #f6f8fa 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body, header, .card, .filters-panel, .category-wrapper, .category-header, .category-content,
+        .achievement-card, .badge-item, .region-badge, .tech-stack-grid-map,
+        .btn, .select-filter, .search-input, .quick-filter-tag, .toast-notification,
+        .progress-track, .avatar-circle, .avatar-option, .player-name-input,
+        .ach-checkbox-custom, .share-modal-content, .avatar-picker-modal,
+        .category-progress-pill, .rarity-pill, .footer-social-links a {
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+            background: var(--washi-bg);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #confettiCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #toastContainer {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .toast-notification {
+            background: rgba(22, 27, 34, 0.95);
+            border-left: 6px solid var(--accent-gold);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+            border-right: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 4px;
+            padding: 16px 20px;
+            width: 340px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            backdrop-filter: blur(10px);
+            color: #fff;
+        }
+
+        [data-theme="light"] .toast-notification {
+            background: rgba(255, 255, 255, 0.95);
+            border-left: 6px solid var(--accent-blue);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+            border-right: 1px solid var(--border-color);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            color: var(--text-primary);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast-notification.hide {
+            animation: slideOut 0.3s ease forwards;
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(120%); opacity: 0; }
+        }
+
+        .toast-icon {
+            font-size: 32px;
+            flex-shrink: 0;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .toast-content {
+            flex-grow: 1;
+        }
+
+        .toast-title {
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            margin-bottom: 2px;
+        }
+
+        [data-theme="light"] .toast-title {
+            color: var(--accent-blue);
+        }
+
+        .toast-desc {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .app-wrapper {
+            max-width: 1400px;
+            width: 100%;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        header {
+            background: var(--header-gradient);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-primary);
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-title-section h1 {
+            margin: 0 0 6px 0;
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title-section p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            background: var(--bg-card-hover);
+            border-color: var(--border-color-active);
+            box-shadow: 0 4px 12px var(--shadow-glow);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-accent {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: #fff;
+        }
+        
+        .btn-accent:hover {
+            background: #4796ff;
+            border-color: #4796ff;
+        }
+
+        [data-theme="light"] .btn-accent {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+        [data-theme="light"] .btn-accent:hover {
+            background: #0756b3;
+            border-color: #0756b3;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 380px 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-primary);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 16px;
+            border-bottom: 2px dashed var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        .avatar-wrapper {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            cursor: pointer;
+        }
+
+        .avatar-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid var(--border-color-active);
+            background: var(--bg-card-hover);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 56px;
+            box-shadow: 0 0 20px var(--shadow-glow);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .avatar-wrapper:hover .avatar-circle {
+            transform: scale(1.05) rotate(5deg);
+            box-shadow: 0 0 30px var(--border-color-active);
+        }
+
+        .avatar-edit-hint {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: var(--border-color-active);
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            border: 2px solid var(--bg-card);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .name-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+        }
+
+        .player-name-input {
+            background: transparent;
+            border: 1px dashed transparent;
+            color: var(--text-primary);
+            font-size: 20px;
+            font-weight: 800;
+            text-align: center;
+            padding: 4px;
+            border-radius: 6px;
+            width: 100%;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .player-name-input:focus, .player-name-input:hover {
+            border-color: var(--border-color-active);
+            background: rgba(255,255,255,0.05);
+        }
+
+        [data-theme="light"] .player-name-input:focus, [data-theme="light"] .player-name-input:hover {
+            background: rgba(0,0,0,0.02);
+        }
+
+        .player-title {
+            color: var(--accent-gold);
+            font-weight: 800;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        [data-theme="light"] .player-title {
+            color: var(--accent-blue);
+        }
+
+        .avatar-picker-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .avatar-picker-modal {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 440px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .avatar-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .avatar-option {
+            font-size: 40px;
+            width: 68px;
+            height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            cursor: pointer;
+            background: var(--bg-primary);
+            transition: all 0.2s;
+        }
+
+        .avatar-option:hover {
+            border-color: var(--border-color-active);
+            transform: scale(1.1);
+        }
+
+        .stats-bar-widget {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .stats-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .progress-track {
+            background: var(--bg-primary);
+            border-radius: 6px;
+            height: 10px;
+            width: 100%;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-green) 100%);
+            width: 0%;
+            transition: width 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 0 8px var(--shadow-glow);
+        }
+
+        [data-theme="light"] .progress-bar {
+            background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-gold) 100%);
+        }
+
+        .radar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #radarCanvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.1);
+        }
+
+        .badge-wall-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        .badge-item {
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            position: relative;
+            opacity: 0.2;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .badge-item.unlocked {
+            opacity: 1;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+        }
+
+        [data-theme="light"] .badge-item.unlocked {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 12px rgba(9, 105, 218, 0.2);
+        }
+
+        .badge-item:hover {
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        .badge-tooltip {
+            position: absolute;
+            background: #111;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            width: 190px;
+            text-align: center;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            z-index: 100;
+            border: 1px solid var(--border-color);
+        }
+
+        .badge-item:hover .badge-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .badge-tooltip-title {
+            font-weight: 800;
+            color: var(--accent-gold);
+            margin-bottom: 4px;
+        }
+
+        [data-theme="light"] .badge-tooltip-title {
+            color: var(--accent-blue);
+        }
+
+        .badge-tooltip-desc {
+            font-weight: 500;
+        }
+
+        .main-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .map-section-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        @media (min-width: 768px) {
+            .map-section-layout {
+                grid-template-columns: 320px 1fr;
+            }
+        }
+
+        .map-scroll-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        .tech-stack-grid-map {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 8px;
+            width: 100%;
+            max-width: 320px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            margin: 0 auto;
+        }
+
+        [data-theme="light"] .tech-stack-grid-map {
+            background: rgba(0, 0, 0, 0.02);
+            border-color: var(--border-color);
+        }
+
+        .tech-cell {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 800;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: var(--text-primary);
+            background: var(--bg-card);
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .tech-cell:hover {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border-color: #fff;
+        }
+
+        .tech-cell.empty-cell {
+            opacity: 0.15;
+            cursor: default;
+            pointer-events: none;
+            border: 1px dashed var(--border-color);
+            background: transparent;
+        }
+
+        .tech-cell.mastered {
+            background-color: var(--accent-green) !important;
+            border-color: #fff !important;
+            color: #fff !important;
+            box-shadow: 0 0 12px var(--accent-green);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+        }
+
+        [data-theme="light"] .tech-cell.mastered {
+            background-color: var(--accent-blue) !important;
+            box-shadow: 0 0 12px var(--accent-blue);
+        }
+
+        .tech-cell.stamp-anim {
+            animation: stampPulse 0.3s ease;
+        }
+
+        @keyframes stampPulse {
+            0% { transform: scale(1.3); }
+            100% { transform: scale(1.0); }
+        }
+
+        .regions-stats-panel {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+        }
+
+        .region-badge {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .region-badge-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .region-badge-value {
+            font-size: 18px;
+            color: var(--accent-blue);
+        }
+
+        [data-theme="light"] .region-badge-value {
+            color: var(--accent-blue);
+        }
+
+        .filters-panel {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .search-input {
+            flex-grow: 2;
+            min-width: 200px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 16px;
+            border-radius: 8px;
+            outline: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .search-input:focus {
+            border-color: var(--border-color-active);
+        }
+
+        .select-filter {
+            flex-grow: 1;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 16px;
+            border-radius: 8px;
+            outline: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .select-filter:focus {
+            border-color: var(--border-color-active);
+        }
+
+        .quick-filters-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 12px;
+        }
+
+        .quick-filter-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .quick-filter-tag {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .quick-filter-tag.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: #fff;
+        }
+
+        .category-wrapper {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .category-header {
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background: rgba(0,0,0,0.1);
+            user-select: none;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        [data-theme="light"] .category-header {
+            background: rgba(0,0,0,0.02);
+        }
+
+        .category-header:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .category-header-title {
+            font-weight: 800;
+            font-size: 16px;
+        }
+
+        .category-progress-pill {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--text-secondary);
+        }
+
+        .category-content {
+            padding: 16px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            max-height: 2000px;
+            opacity: 1;
+            transition: all 0.3s cubic-bezier(0, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        @media (min-width: 768px) {
+            .category-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .category-wrapper.collapsed .category-content {
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            opacity: 0;
+            border-bottom-width: 0;
+        }
+
+        .category-wrapper.collapsed .category-header {
+            border-bottom-color: transparent;
+        }
+
+        .achievement-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .achievement-card:hover {
+            border-color: var(--border-color-active);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .ach-checkbox-container {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .ach-checkbox-custom {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            color: transparent;
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        .achievement-card.done .ach-checkbox-custom {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: #fff;
+        }
+
+        [data-theme="light"] .achievement-card.done .ach-checkbox-custom {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: #fff;
+        }
+
+        .ach-details {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .ach-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .ach-title {
+            font-weight: 800;
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        .achievement-card.done .ach-title {
+            text-decoration: none;
+        }
+
+        .ach-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        .ach-meta {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        .difficulty-stars {
+            font-size: 11px;
+            color: var(--accent-gold);
+            letter-spacing: 1px;
+        }
+
+        .rarity-pill {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .rarity-common { background: rgba(139, 148, 158, 0.15); color: var(--text-secondary); }
+        .rarity-rare { background: rgba(88, 166, 255, 0.15); color: var(--accent-blue); }
+        .rarity-epic { background: rgba(171, 71, 188, 0.15); color: #c370e0; }
+        .rarity-legendary { background: rgba(241, 196, 15, 0.15); color: var(--accent-gold); }
+        .rarity-custom { background: rgba(63, 185, 80, 0.15); color: var(--accent-green); }
+
+        /* Hidden Achievement Style */
+        .achievement-card.hidden-ach .ach-title,
+        .achievement-card.hidden-ach .ach-desc {
+            filter: blur(4px);
+            user-select: none;
+            opacity: 0.6;
+        }
+
+        .achievement-card.hidden-ach.done .ach-title,
+        .achievement-card.hidden-ach.done .ach-desc {
+            filter: none;
+            opacity: 1;
+        }
+
+        .achievement-card.hidden-ach::before {
+            content: "🔒 HIDDEN ACHIEVEMENT";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 4px;
+            z-index: 5;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .achievement-card.hidden-ach.done::before {
+            opacity: 0;
+            display: none;
+        }
+
+        /* Custom Achievements Container */
+        .custom-achievements-wrapper {
+            background: var(--bg-card);
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .custom-ach-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        @media (min-width: 768px) {
+            .custom-ach-list {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .custom-ach-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            position: relative;
+        }
+
+        .delete-custom-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-custom-btn:hover {
+            color: var(--accent-red);
+        }
+
+        /* Custom Achievement Add Modal */
+        .custom-ach-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .custom-ach-modal {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 460px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 8px;
+            outline: none;
+            font-size: 13px;
+            font-weight: 600;
+            width: 100%;
+        }
+
+        .form-input:focus {
+            border-color: var(--border-color-active);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        /* Share Modal & Canvas Preview */
+        .share-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .share-modal-content {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 440px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            text-align: center;
+        }
+
+        .sharing-preview-canvas-wrapper {
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            aspect-ratio: 800 / 1200;
+        }
+
+        #sharingPreviewCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: var(--bg-primary);
+        }
+
+        .social-share-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 8px 0;
+        }
+
+        .social-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #fff;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.2s;
+        }
+
+        .social-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .social-btn.threads { background-color: #000000; }
+        .social-btn.facebook { background-color: #1877f2; }
+        .social-btn.x-twitter { background-color: #14171a; }
+
+        /* Welcome/Register Modal */
+        .register-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 17, 23, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .register-modal {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 24px;
+            width: 90%;
+            max-width: 420px;
+            padding: 32px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            text-align: center;
+            border-top: 4px solid var(--border-color-active);
+        }
+
+        .register-welcome-icon {
+            font-size: 64px;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 4px 8px var(--shadow-glow));
+        }
+
+        /* Footer and social links */
+        footer {
+            margin-top: auto;
+            width: 100%;
+            padding: 40px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .footer-social-links {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .footer-social-links a {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .footer-social-links a:hover {
+            color: var(--border-color-active);
+        }
+
+        .footer-credit {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="confettiCanvas"></canvas>
+    <div id="toastContainer"></div>
+
+    <div class="app-wrapper">
+        <!-- HEADER SECTION -->
+        <header>
+            <div class="header-title-section">
+                <h1 data-i18n="title">開發者成就系統</h1>
+                <p data-i18n="subtitle">點亮技術版圖 • 解鎖專業徽章 • 完成你的工程師修仙手帳</p>
+            </div>
+            <div class="header-controls">
+                <select id="langSelector" class="select-filter" style="width: auto;" onchange="changeLanguage(this.value)">
+                    <option value="zh-TW">繁體中文</option>
+                    <option value="en">English</option>
+                </select>
+                <button class="btn btn-accent" onclick="generateShareCard()">
+                    <span>📤</span> <span data-i18n="shareCardBtn">分享成就卡</span>
+                </button>
+                <button class="btn" onclick="toggleTheme()">
+                    <span>🌓</span> <span id="themeToggleText" data-i18n="themeToggleTextLight">切換淺色</span>
+                </button>
+                <button class="btn" onclick="exportBackup()" data-i18n="exportBtn">匯出備份</button>
+                <button class="btn" onclick="importBackup()" data-i18n="importBtn">導入備份</button>
+                <button class="btn" style="border-color: rgba(255,62,0,0.3); color: var(--accent-red);" onclick="resetAllProgress()" data-i18n="resetBtn">重置</button>
+            </div>
+        </header>
+
+        <!-- DASHBOARD CONTAINER -->
+        <div class="dashboard-grid">
+            <!-- SIDEBAR: PROFILE & STATS -->
+            <div class="card" style="height: fit-content;">
+                <!-- Profile Block -->
+                <div class="profile-container">
+                    <div class="avatar-wrapper" onclick="openAvatarPicker('profile')">
+                        <div class="avatar-circle" id="playerAvatar">💻</div>
+                        <div class="avatar-edit-hint">✏️</div>
+                    </div>
+                    <div class="name-wrapper">
+                        <input type="text" class="player-name-input" id="playerName" value="開發者工程師" onblur="savePlayerName(this.value)" data-i18n-title="playerNameInputTitle" title="點擊修改暱稱" maxlength="15">
+                        <div class="player-title" id="playerTitle">🌱 Hello World 新手</div>
+                    </div>
+                </div>
+
+                <!-- Progress/XP Widget -->
+                <div class="stats-bar-widget">
+                    <div class="stats-info">
+                        <span id="playerLevelDisplay" style="font-weight: 800; font-family: var(--font-mono);">LV 0</span>
+                        <span id="playerXpDisplay" style="font-family: var(--font-mono);">0 / 10 成就</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-bar" id="playerXpBar"></div>
+                    </div>
+                </div>
+
+                <!-- Radar capability map -->
+                <div class="radar-container">
+                    <div style="font-size: 15px; font-weight: 800; color: var(--text-secondary); width: 100%; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; text-align: left;" data-i18n="radarChartTitle">📊 分類探索度 (雷達圖)</div>
+                    <canvas id="radarCanvas" width="300" height="300"></canvas>
+                </div>
+
+                <!-- Badges wall -->
+                <div class="badge-wall-container">
+                    <div style="font-size: 15px; font-weight: 800; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;" data-i18n="badgeWallTitle">🏆 徽章展示牆</div>
+                    <div class="badge-wall-grid" id="badgeWallGrid"></div>
+                </div>
+            </div>
+
+            <!-- MAIN WORKSPACE -->
+            <div class="main-column">
+                <!-- TECH STACK FOOTPRINT GRID MAP -->
+                <div class="card">
+                    <div style="font-size: 18px; font-weight: 900;" data-i18n="mapTitle">技術領域版圖</div>
+                    <div class="map-section-layout">
+                        <!-- Grid layout map of tech stack -->
+                        <div>
+                            <div class="tech-stack-grid-map" id="techStackGridMap"></div>
+                            <div class="map-scroll-hint" data-i18n="mapScrollHint">💡 點擊技術節點以點亮/標記已涉足之領域</div>
+                        </div>
+
+                        <!-- Stats panel for domains -->
+                        <div class="regions-stats-panel" id="regionsStatsPanel"></div>
+                    </div>
+                </div>
+
+                <!-- FILTERS TOOLBAR -->
+                <div class="filters-panel">
+                    <div class="filters-row">
+                        <input type="text" class="search-input" id="searchFilter" placeholder="搜尋成就名稱或說明描述..." oninput="handleFilterChange()" data-i18n-placeholder="searchPlaceholder">
+                        <select class="select-filter" id="diffFilter" onchange="handleFilterChange()">
+                            <option value="all" data-i18n="filterAllDiff">所有難度</option>
+                            <option value="1">★☆☆☆☆ (輕鬆)</option>
+                            <option value="2">★★☆☆☆ (一般)</option>
+                            <option value="3">★★★☆☆ (挑戰)</option>
+                            <option value="4">★★★★☆ (困難)</option>
+                            <option value="5">★★★★★ (史詩)</option>
+                            <option value="6" data-i18n="filterDiff6">★★★★★★ (隱藏)</option>
+                        </select>
+                        <select class="select-filter" id="rarityFilter" onchange="handleFilterChange()">
+                            <option value="all" data-i18n="filterAllRarity">所有稀有度</option>
+                            <option value="Common">COMMON</option>
+                            <option value="Rare">RARE</option>
+                            <option value="Epic">EPIC</option>
+                            <option value="Legendary">LEGENDARY</option>
+                        </select>
+                        <select class="select-filter" id="statusFilter" onchange="handleFilterChange()">
+                            <option value="all" data-i18n="filterAllStatus">所有狀態</option>
+                            <option value="completed" data-i18n="filterStatusCompleted">已解鎖</option>
+                            <option value="uncompleted" data-i18n="filterStatusUncompleted">未解鎖</option>
+                        </select>
+                    </div>
+
+                    <div class="quick-filters-row">
+                        <span class="quick-filter-label" data-i18n="quickFilterLabel">快速篩選徽章：</span>
+                        <span class="quick-filter-tag active" id="badge-all-tag" onclick="filterByBadge('all')">
+                            <span data-i18n="quickFilterAll">全部</span>
+                        </span>
+                        <!-- Tags injected dynamically -->
+                        <span id="quickFilterTagsContainer" style="display: flex; gap: 8px; flex-wrap: wrap;"></span>
+                    </div>
+                </div>
+
+                <!-- ACHIEVEMENTS LIST CONTAINER -->
+                <div id="achievementsContainer" style="display: flex; flex-direction: column; gap: 24px;"></div>
+
+                <!-- CUSTOM ACHIEVEMENTS SECTION -->
+                <div class="custom-achievements-wrapper">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <span style="font-size: 16px; font-weight: 800;" data-i18n="customAchTitle">我的自訂成就</span>
+                        <button class="btn btn-accent" onclick="openCustomAchModal()">
+                            <span data-i18n="addCustomAchBtn">新增自訂成就</span>
+                        </button>
+                    </div>
+                    <div class="custom-ach-list" id="customAchList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-social-links">
+            <a href="https://github.com/ivanusto/taiwan-travel-achievement-list" target="_blank" rel="noreferrer noopener">🗺️ 台灣旅行成就系統</a>
+        </div>
+        <div class="footer-credit" data-i18n="footerCredit">
+            本專案受台灣旅行成就系統啟發，改造成為工程師/開發者專屬的成就系統。<br>
+            成就進度會自動儲存在您瀏覽器的本地快取（LocalStorage）中，隱私安全無虞。<br>
+            © 2026 Engineer Achievement List • ivanusto
+        </div>
+    </footer>
+
+    <!-- POPUP MODALS -->
+
+    <!-- Avatar Picker Modal -->
+    <div class="avatar-picker-backdrop" id="avatarPickerBackdrop" onclick="if(event.target === this) closeAvatarPicker()">
+        <div class="avatar-picker-modal">
+            <h3 data-i18n="avatarModalTitle">選擇頭像 Emojis</h3>
+            <div class="avatar-picker-grid" id="avatarPickerGrid"></div>
+            <button class="btn" onclick="closeAvatarPicker()" data-i18n="closeBtn">關閉</button>
+        </div>
+    </div>
+
+    <!-- Custom Achievement Modal -->
+    <div class="custom-ach-modal-backdrop" id="customAchModalBackdrop" onclick="if(event.target === this) closeCustomAchModal()">
+        <div class="custom-ach-modal">
+            <h3 id="customAchModalTitle" data-i18n="customAchModalTitleAdd">🌟 新增自訂成就</h3>
+            <div class="form-group">
+                <label for="customAchName" data-i18n="customAchNameLabel">成就名稱（必填，30 字內）</label>
+                <input type="text" id="customAchName" class="form-input" placeholder="例如：手寫一個 Lisp 直譯器" maxlength="30">
+            </div>
+            <div class="form-group">
+                <label for="customAchDesc" data-i18n="customAchDescLabel">成就描述（選填，60 字內）</label>
+                <input type="text" id="customAchDesc" class="form-input" placeholder="例如：在不參考任何外部教學的情況下，用 C 語言實現..." maxlength="60">
+            </div>
+            <div class="form-group">
+                <label for="customAchDiff" data-i18n="customAchDiffLabel">難度星級</label>
+                <select id="customAchDiff" class="form-input">
+                    <option value="1" data-i18n="customAchDiff1">★☆☆☆☆ (輕鬆達成)</option>
+                    <option value="2" data-i18n="customAchDiff2">★★☆☆☆ (小有挑戰)</option>
+                    <option value="3" data-i18n="customAchDiff3">★★★☆☆ (需要努力)</option>
+                    <option value="4" data-i18n="customAchDiff4">★★★★☆ (相當困難)</option>
+                    <option value="5" data-i18n="customAchDiff5">★★★★★ (畢生難忘)</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn" onclick="closeCustomAchModal()" data-i18n="cancelBtn">取消</button>
+                <button class="btn btn-accent" onclick="saveCustomAchievement()" data-i18n="saveBtn">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Card Generation Modal -->
+    <div class="share-modal-backdrop" id="shareModalBackdrop" onclick="if(event.target === this) closeShareModal()">
+        <div class="share-modal-content" onclick="event.stopPropagation()">
+            <h3 data-i18n="shareModalTitle">📸 生成個人成就卡</h3>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0;" data-i18n="shareModalDesc">您可以將此圖卡分享到社交媒體，炫耀您的工程師修仙歷練！</p>
+            
+            <div class="sharing-preview-canvas-wrapper">
+                <canvas id="sharingPreviewCanvas" width="800" height="1200"></canvas>
+            </div>
+
+            <div class="social-share-buttons">
+                <button class="social-btn threads" onclick="shareToSocial('threads')" title="Share to Threads">T</button>
+                <button class="social-btn facebook" onclick="shareToSocial('facebook')" title="Share to Facebook">F</button>
+                <button class="social-btn x-twitter" onclick="shareToSocial('x')" title="Share to X">X</button>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button class="btn btn-accent" onclick="downloadShareCard()" data-i18n="downloadPngBtn">下載 PNG 圖片</button>
+                <button class="btn" onclick="closeShareModal()" data-i18n="cancelBtn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Explorer Login/Register Modal -->
+    <div class="register-modal-backdrop" id="registerModalBackdrop">
+        <div class="register-modal">
+            <div class="register-welcome-icon">💻</div>
+            <h3 data-i18n="registerTitle">💻 開發者登錄</h3>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 8px 0;" data-i18n="registerDesc">歡迎光臨！請輸入您的開發者暱稱以開啟成就記錄：</p>
+            <div class="form-group" style="align-items: center;">
+                <div class="avatar-circle" id="registerAvatar" onclick="openAvatarPicker('register')" style="cursor:pointer; width:80px; height:80px; font-size:44px; margin-bottom:8px;">💻</div>
+                <span style="font-size:11px; color: var(--text-secondary);" data-i18n="registerAvatarHint">（點擊選擇頭像）</span>
+            </div>
+            <div class="form-group">
+                <input type="text" id="registerPlayerName" class="form-input" style="text-align: center; font-size: 16px;" placeholder="請輸入開發者暱稱..." maxlength="15">
+            </div>
+            <button class="btn btn-accent" style="width: 100%; justify-content: center; padding: 12px;" onclick="submitRegister()" data-i18n="registerStartBtn">開始修仙！</button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT CODE -->
+    <script>
+        // Global error logger for easier debugging
+        window.onerror = function(message, source, lineno, colno, error) {
+            const errDiv = document.createElement('div');
+            errDiv.style.position = 'fixed';
+            errDiv.style.top = '0';
+            errDiv.style.left = '0';
+            errDiv.style.width = '100vw';
+            errDiv.style.background = 'rgba(220, 53, 69, 0.95)';
+            errDiv.style.color = '#fff';
+            errDiv.style.padding = '16px';
+            errDiv.style.zIndex = '999999';
+            errDiv.style.fontFamily = 'monospace';
+            errDiv.style.fontSize = '14px';
+            errDiv.style.lineHeight = '1.5';
+            errDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+            errDiv.style.maxHeight = '50vh';
+            errDiv.style.overflowY = 'auto';
+            errDiv.innerHTML = `<strong>⚠️ JS Runtime Error:</strong> ${message}<br><small>at ${source}:${lineno}:${colno}</small><br><pre style="margin-top: 8px; font-size: 12px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">${error ? error.stack : ''}</pre>`;
+            document.body.appendChild(errDiv);
+            return false;
+        };
+        window.addEventListener('unhandledrejection', function(event) {
+            const errDiv = document.createElement('div');
+            errDiv.style.position = 'fixed';
+            errDiv.style.top = '0';
+            errDiv.style.left = '0';
+            errDiv.style.width = '100vw';
+            errDiv.style.background = 'rgba(220, 53, 69, 0.95)';
+            errDiv.style.color = '#fff';
+            errDiv.style.padding = '16px';
+            errDiv.style.zIndex = '999999';
+            errDiv.style.fontFamily = 'monospace';
+            errDiv.style.fontSize = '14px';
+            errDiv.style.lineHeight = '1.5';
+            errDiv.innerHTML = `<strong>⚠️ Unhandled Promise Rejection:</strong> ${event.reason}`;
+            document.body.appendChild(errDiv);
+        });
+
+        // --- 1. Emojis and Config Databases ---
+        const avatars = ["💻", "🚀", "🐛", "☕", "🐍", "🐹", "🦀", "🤖", "🧠", "🎨", "🐳", "🐧", "🛡️", "📦", "⚡", "🦖", "🦊", "🐱", "☕", "🍻"];
+
+        const badgeData = [
+            { id: "keyboard-warrior", name: "鍵盤行者", nameEn: "Keyboard Warrior", emoji: "⌨️", desc: "解鎖 6 項語法與基礎相關成就", descEn: "Unlock 6 language and syntax achievements", threshold: 6, catLink: "語法基礎" },
+            { id: "git-master", name: "版本控制大師", nameEn: "Git Master", emoji: "🌿", desc: "解鎖 6 項開發工具相關成就", descEn: "Unlock 6 development tools achievements", threshold: 6, catLink: "開發工具" },
+            { id: "pixel-perfect", name: "像素完美主義", nameEn: "Pixel Perfect", emoji: "🎨", desc: "解鎖 6 項前端開發相關成就", descEn: "Unlock 6 frontend development achievements", threshold: 6, catLink: "前端開發" },
+            { id: "database-guru", name: "資料庫守護者", nameEn: "Database Guru", emoji: "💾", desc: "解鎖 6 項後端開發相關成就", descEn: "Unlock 6 backend development achievements", threshold: 6, catLink: "後端開發" },
+            { id: "cloud-walker", name: "雲端漫步者", nameEn: "Cloud Walker", emoji: "☁️", desc: "解鎖 6 項運維與雲端相關成就", descEn: "Unlock 6 DevOps & cloud achievements", threshold: 6, catLink: "運維雲端" },
+            { id: "architect", name: "系統架構設計師", nameEn: "System Architect", emoji: "🏗️", desc: "解鎖 6 項系統與架構相關成就", descEn: "Unlock 6 architecture and systems achievements", threshold: 6, catLink: "系統架構" },
+            { id: "bug-slayer", name: "Bug 終結者", nameEn: "Bug Slayer", emoji: "🛡️", desc: "解鎖 6 項測試與品質相關成就", descEn: "Unlock 6 testing and quality achievements", threshold: 6, catLink: "測試品質" },
+            { id: "social-coder", name: "社群開源先鋒", nameEn: "Open Source Pioneer", emoji: "🤝", desc: "解鎖 6 項協作與社群相關成就", descEn: "Unlock 6 collaboration and community achievements", threshold: 6, catLink: "協作社群" },
+            { id: "survivor", name: "伺服器大難不死者", nameEn: "Server Down Survivor", emoji: "🔥", desc: "解鎖 6 項修仙與災難相關成就", descEn: "Unlock 6 real-world disaster achievements", threshold: 6, catLink: "修仙災難" },
+            { id: "legend", name: "傳奇程式極客", nameEn: "Legendary Geek", emoji: "🧙‍♂️", desc: "解鎖 6 項極限挑戰相關成就", descEn: "Unlock 6 ultimate challenge achievements", threshold: 6, catLink: "極限挑戰" }
+        ];
+
+        const techStackData = [
+            { id: "htmlcss", name: "HTML/CSS", nameEn: "HTML/CSS", domain: "Frontend", domainEn: "Frontend", row: 1, col: 1, color: "#e34f26" },
+            { id: "javascript", name: "JavaScript", nameEn: "JavaScript", domain: "Frontend", domainEn: "Frontend", row: 1, col: 2, color: "#f7df1e" },
+            { id: "reactvue", name: "React/Vue", nameEn: "React/Vue", domain: "Frontend", domainEn: "Frontend", row: 1, col: 3, color: "#41b883" },
+            { id: "tailwind", name: "Tailwind", nameEn: "Tailwind", domain: "Frontend", domainEn: "Frontend", row: 1, col: 4, color: "#38bdf8" },
+            { id: "typescript", name: "TypeScript", nameEn: "TypeScript", domain: "Frontend", domainEn: "Frontend", row: 1, col: 5, color: "#3178c6" },
+            { id: "nodejs", name: "Node.js", nameEn: "Node.js", domain: "Backend", domainEn: "Backend", row: 2, col: 1, color: "#68a063" },
+            { id: "python", name: "Python", nameEn: "Python", domain: "Backend", domainEn: "Backend", row: 2, col: 2, color: "#3776ab" },
+            { id: "gorust", name: "Go/Rust", nameEn: "Go/Rust", domain: "Backend", domainEn: "Backend", row: 2, col: 3, color: "#00add8" },
+            { id: "sql", name: "SQL DB", nameEn: "SQL DB", domain: "Backend", domainEn: "Backend", row: 2, col: 4, color: "#f29111" },
+            { id: "nosql", name: "NoSQL DB", nameEn: "NoSQL DB", domain: "Backend", domainEn: "Backend", row: 2, col: 5, color: "#4db33d" },
+            { id: "git", name: "Git", nameEn: "Git", domain: "Tools", domainEn: "Tools", row: 3, col: 2, color: "#f05032" },
+            { id: "vimshell", name: "Vim/Shell", nameEn: "Vim/Shell", domain: "Tools", domainEn: "Tools", row: 3, col: 4, color: "#4af626" },
+            { id: "linux", name: "Linux OS", nameEn: "Linux OS", domain: "DevOps", domainEn: "DevOps", row: 4, col: 1, color: "#fcc624" },
+            { id: "docker", name: "Docker", nameEn: "Docker", domain: "DevOps", domainEn: "DevOps", row: 4, col: 2, color: "#2496ed" },
+            { id: "kubernetes", name: "K8s", nameEn: "K8s", domain: "DevOps", domainEn: "DevOps", row: 4, col: 3, color: "#326ce5" },
+            { id: "cicd", name: "CI/CD", nameEn: "CI/CD", domain: "DevOps", domainEn: "DevOps", row: 4, col: 4, color: "#2088ff" },
+            { id: "cloud", name: "AWS/GCP", nameEn: "AWS/GCP", domain: "DevOps", domainEn: "DevOps", row: 4, col: 5, color: "#ff9900" },
+            { id: "algorithms", name: "DSA", nameEn: "DSA", domain: "CS & AI", domainEn: "CS & AI", row: 5, col: 1, color: "#ff3e00" },
+            { id: "network", name: "Network", nameEn: "Network", domain: "CS & AI", domainEn: "CS & AI", row: 5, col: 2, color: "#9b51e0" },
+            { id: "restgraphql", name: "API Design", nameEn: "API Design", domain: "CS & AI", domainEn: "CS & AI", row: 5, col: 3, color: "#e10098" },
+            { id: "security", name: "Security", nameEn: "Security", domain: "CS & AI", domainEn: "CS & AI", row: 5, col: 4, color: "#eb5757" },
+            { id: "aiml", name: "AI / ML", nameEn: "AI / ML", domain: "CS & AI", domainEn: "CS & AI", row: 5, col: 5, color: "#ff6b6b" }
+        ];
+
+        // --- 2. Complete 100 Achievements Data ---
+        const achievementsData = [
+            // Languages & Basics 語法基礎 (1-10)
+            { id: 1, name: "Hello World 🚀", nameEn: "Hello World 🚀", desc: "在任何程式語言中成功印出第一行 \"Hello, World!\"", descEn: "Successfully print your first 'Hello, World!' in any programming language.", diff: 1, rarity: "Common", cat: "語法基礎", badgeId: "keyboard-warrior" },
+            { id: 2, name: "語法編譯成功 🎉", nameEn: "Syntax Success 🎉", desc: "第一次解決語法錯誤，讓編譯器或直譯器順利執行。", descEn: "Resolve a syntax error and get the compiler or interpreter to run successfully.", diff: 1, rarity: "Common", cat: "語法基礎", badgeId: "keyboard-warrior" },
+            { id: 3, name: "指針與記憶體 🧠", nameEn: "Pointers & Memory 🧠", desc: "搞懂指標 (Pointer) 或垃圾回收 (GC) 的基本運作機制。", descEn: "Understand pointers or the basic garbage collection (GC) mechanism.", diff: 2, rarity: "Common", cat: "語法基礎", badgeId: "keyboard-warrior" },
+            { id: 4, name: "正則表達式大師 🔍", nameEn: "Regex Master 🔍", desc: "成功寫出一個比對複雜字串的正則表達式 (Regex) 並成功執行。", descEn: "Write and execute a complex Regular Expression (Regex) matching pattern.", diff: 2, rarity: "Common", cat: "語法基礎", badgeId: "keyboard-warrior" },
+            { id: 5, name: "非同步程式設計 ⚡", nameEn: "Async/Await Magic ⚡", desc: "搞懂 Promise, async/await 或協程 (Coroutine) 的非同步呼叫流程。", descEn: "Understand Promise, async/await, or Coroutines in async programming.", diff: 2, rarity: "Common", cat: "語法基礎", badgeId: "keyboard-warrior" },
+            { id: 6, name: "遞迴終結者 🔄", nameEn: "Recursion Master 🔄", desc: "成功寫出一個會自己呼叫自己且有正確終止條件的遞迴函式。", descEn: "Write a recursive function with a correct base-case termination condition.", diff: 2, rarity: "Common", cat: "語法基礎", badgeId: "keyboard-warrior" },
+            { id: 7, name: "型別大戰 🛡️", nameEn: "Implicit Type Trap 🛡️", desc: "在動態語言中因為隱式型別轉換而踩雷，隨後發誓使用強型別。", descEn: "Get bitten by implicit type conversion and vow to use static typing.", diff: 2, rarity: "Common", cat: "語法基礎", badgeId: "keyboard-warrior" },
+            { id: 8, name: "位元運算魔法 🧙‍♂️", nameEn: "Bitwise Sorcery 🧙‍♂️", desc: "在實務中寫出並使用過位元運算 (Bitwise: AND, OR, XOR, Shift)。", descEn: "Use bitwise operations (AND, OR, XOR, Shift) in a real project.", diff: 3, rarity: "Rare", cat: "語法基礎", badgeId: "keyboard-warrior" },
+            { id: 9, name: "記憶體溢出 (OOM) 💥", nameEn: "Out of Memory 💥", desc: "寫出一個無限循環或漏釋放記憶體，導致系統 Heap Out of Memory。", descEn: "Cause a memory leak or infinite loop that crashes the heap with OOM.", diff: 3, rarity: "Rare", cat: "語法基礎", badgeId: "keyboard-warrior" },
+            { id: 10, name: "熟練掌握三門語言 📚", nameEn: "Polyglot Coder 📚", desc: "能夠使用至少三種不同範式 (OOP, Functional, Scripting) 的語言開發項目。", descEn: "Develop real projects using at least 3 distinct programming paradigms.", diff: 4, rarity: "Epic", cat: "語法基礎", badgeId: "keyboard-warrior" },
+
+            // Development Tools 開發工具 (11-20)
+            { id: 11, name: "Git Commit 🌿", nameEn: "Git Commit 🌿", desc: "成功使用 Git 提交代碼，並學會編寫意義明確的 Commit Message。", descEn: "Make a Git commit with a meaningful and descriptive message.", diff: 1, rarity: "Common", cat: "開發工具", badgeId: "git-master" },
+            { id: 12, name: "衝突排除 (Conflict) ⚔️", nameEn: "Resolve Conflicts ⚔️", desc: "面對 Git Merge 衝突時沒有刪庫跑路，手動解開衝突並成功合併。", descEn: "Manually resolve a git merge conflict without deleting the repo.", diff: 2, rarity: "Common", cat: "開發工具", badgeId: "git-master" },
+            { id: 13, name: "Vim 生存挑戰 🚪", nameEn: "Exit Vim Challenge 🚪", desc: "成功在 Linux 終端機中使用 Vim 編輯檔案，且順利找到退出 Vim 的方法 (:wq)。", descEn: "Edit a file using Vim in the terminal and successfully exit (:wq).", diff: 2, rarity: "Common", cat: "開發工具", badgeId: "git-master" },
+            { id: 14, name: "終端機魔法 🐚", nameEn: "Terminal Wizardry 🐚", desc: "學會寫簡單的 Shell 腳本 (Bash/PowerShell) 來自動化日常繁瑣工作。", descEn: "Write a Shell script (Bash/PowerShell) to automate a tedious task.", diff: 2, rarity: "Common", cat: "開發工具", badgeId: "git-master" },
+            { id: 15, name: "IDE 神兵利器 🛠️", nameEn: "IDE Customization 🛠️", desc: "熟練使用一套 IDE (VS Code, JetBrains...) 並安裝超過 10 個擴充套件。", descEn: "Customize an IDE (VS Code/JetBrains) with 10+ essential extensions.", diff: 2, rarity: "Common", cat: "開發工具", badgeId: "git-master" },
+            { id: 16, name: "套件相依性地獄 📦", nameEn: "Dependency Hell 📦", desc: "經歷過 npm install 或 pip install 爆掉，並手動清空快取解決相依性問題。", descEn: "Experience broken package install caches and manually repair them.", diff: 2, rarity: "Common", cat: "開發工具", badgeId: "git-master" },
+            { id: 17, name: "SSH 遠端連接 🔑", nameEn: "SSH Keys Setup 🔑", desc: "配置並使用金鑰 (SSH Key) 安全連接至遠端伺服器或 GitHub。", descEn: "Configure SSH keys to securely access remote servers or GitHub.", diff: 2, rarity: "Common", cat: "開發工具", badgeId: "git-master" },
+            { id: 18, name: "時光機 (Rebase/Reset) ⏪", nameEn: "Git Time Machine ⏪", desc: "成功使用 git reset --hard 或 git rebase -i 來整理提交歷史。", descEn: "Clean up git history using git reset --hard or git rebase -i.", diff: 3, rarity: "Rare", cat: "開發工具", badgeId: "git-master" },
+            { id: 19, name: "極速盲打鍵盤 ⌨️", nameEn: "Speed Typer ⌨️", desc: "不需要看鍵盤即可流暢輸入代碼，盲打速度達到 80 WPM 以上。", descEn: "Type code fluently without looking at the keyboard at 80+ WPM.", diff: 3, rarity: "Rare", cat: "開發工具", badgeId: "git-master" },
+            { id: 20, name: "全鍵盤流操作 🚫", nameEn: "No-Mouse Challenge 🚫", desc: "挑戰連續一整週開發完全不碰滑鼠，全程使用快捷鍵與終端機。", descEn: "Develop for a whole week without touching the mouse (shortcuts only).", diff: 5, rarity: "Legendary", cat: "開發工具", badgeId: "git-master" },
+
+            // Frontend Dev 前端開發 (21-30)
+            { id: 21, name: "Hello HTML 🌐", nameEn: "Hello HTML 🌐", desc: "手寫一個 HTML 頁面，並引入 CSS 調整樣式。", descEn: "Hand-write an HTML page and style it with basic CSS.", diff: 1, rarity: "Common", cat: "前端開發", badgeId: "pixel-perfect" },
+            { id: 22, name: "Flexbox 彈性排版 📐", nameEn: "Centering with Flex 📐", desc: "搞懂並熟練使用 CSS Flexbox 或 Grid，不再為垂直置中而頭痛。", descEn: "Master CSS Flexbox or Grid layouts to align items perfectly.", diff: 2, rarity: "Common", cat: "前端開發", badgeId: "pixel-perfect" },
+            { id: 23, name: "前端組件化開發 📦", nameEn: "Componentization 📦", desc: "使用 React / Vue / Svelte 寫出第一個可複用的前端 UI 組件。", descEn: "Write a reusable UI component in React, Vue, or Svelte.", diff: 2, rarity: "Common", cat: "前端開發", badgeId: "pixel-perfect" },
+            { id: 24, name: "響應式網頁 (RWD) 📱", nameEn: "Responsive RWD 📱", desc: "撰寫 CSS Media Queries，讓網頁在手機與電腦版面上都完美呈現。", descEn: "Write CSS media queries to support desktop and mobile layouts.", diff: 2, rarity: "Common", cat: "前端開發", badgeId: "pixel-perfect" },
+            { id: 25, name: "手動引入打包工具 ⚙️", nameEn: "Bundler Config ⚙️", desc: "親手配置 Webpack, Vite 或 Rollup，優化前端靜態資源打包效能。", descEn: "Configure Webpack, Vite, or Rollup to package assets.", diff: 3, rarity: "Rare", cat: "前端開發", badgeId: "pixel-perfect" },
+            { id: 26, name: "狀態管理大師 🗃️", nameEn: "State Manager 🗃️", desc: "在前端專案中使用 Redux, Pinia 或 Vuex 來控管複雜的全域狀態。", descEn: "Manage complex global state with Redux, Pinia, or Vuex.", diff: 3, rarity: "Rare", cat: "前端開發", badgeId: "pixel-perfect" },
+            { id: 27, name: "跨域請求突破 (CORS) 🌐", nameEn: "CORS Breakthrough 🌐", desc: "遇到 CORS 錯誤時，成功透過配置代理 (Proxy) 或後端 Header 解決。", descEn: "Resolve browser CORS errors via local proxy or backend CORS headers.", diff: 2, rarity: "Common", cat: "前端開發", badgeId: "pixel-perfect" },
+            { id: 28, name: "CSS 動畫美學 🎨", nameEn: "CSS Keyframe Art 🎨", desc: "僅使用純 CSS (@keyframes, transition) 做出吸睛流暢的微動畫效果。", descEn: "Create smooth web animations using pure CSS keyframes/transitions.", diff: 3, rarity: "Rare", cat: "前端開發", badgeId: "pixel-perfect" },
+            { id: 29, name: "瀏覽器渲染優化 ⚡", nameEn: "Lighthouse 95+ ⚡", desc: "搞懂瀏覽器 Reflow / Repaint 機制，並將網頁 Lighthouse 效能評分優化至 95 分以上。", descEn: "Optimize browser reflow/repaint to reach 95+ score on Lighthouse.", diff: 4, rarity: "Epic", cat: "前端開發", badgeId: "pixel-perfect" },
+            { id: 30, name: "WebGL / Canvas 畫布 🌌", nameEn: "Canvas/WebGL Art 🌌", desc: "使用 HTML5 Canvas 或 Three.js 繪製出炫麗的 2D/3D 動態視覺特效。", descEn: "Render immersive 2D/3D graphics using Canvas or Three.js WebGL.", diff: 4, rarity: "Epic", cat: "前端開發", badgeId: "pixel-perfect" },
+
+            // Backend Dev 後端開發 (31-40)
+            { id: 31, name: "打造首個 API 🔌", nameEn: "First API 🔌", desc: "使用 Express, FastAPI 或 Spring Boot 寫出第一個 RESTful API 連接口。", descEn: "Build a RESTful API endpoint using Express, FastAPI, or Spring Boot.", diff: 1, rarity: "Common", cat: "後端開發", badgeId: "database-guru" },
+            { id: 32, name: "資料庫 CRUD 💾", nameEn: "Database CRUD 💾", desc: "成功寫出 SQL 指令 (Select, Join) 並在關聯式資料庫中查詢出所需資料。", descEn: "Write SQL statements (Select, Join) to query relational databases.", diff: 1, rarity: "Common", cat: "後端開發", badgeId: "database-guru" },
+            { id: 33, name: "身份驗證 (Auth) 🔐", nameEn: "JSON Web Tokens 🔐", desc: "實作使用者登入註冊系統，並使用 JWT 或 Session 進行安全的身份驗證。", descEn: "Implement user authentication using secure JWT or Session cookies.", diff: 2, rarity: "Common", cat: "後端開發", badgeId: "database-guru" },
+            { id: 34, name: "快取魔法 (Redis) ⚡", nameEn: "Redis Cache ⚡", desc: "使用 Redis 進行記憶體快取，成功讓高頻讀取 API 的回應速度提升 10 倍。", descEn: "Speed up API reads tenfold using Redis memory caching.", diff: 2, rarity: "Common", cat: "後端開發", badgeId: "database-guru" },
+            { id: 35, name: "N+1 查詢優化 🔍", nameEn: "Solve N+1 Query 🔍", desc: "發現並解決 ORM 框架中的 N+1 查詢問題，大幅減少資料庫查詢次數。", descEn: "Discover and solve N+1 query bottlenecks in your ORM layer.", diff: 3, rarity: "Rare", cat: "後端開發", badgeId: "database-guru" },
+            { id: 36, name: "資料庫遷移 (Migration) 🚀", nameEn: "Schema Migrations 🚀", desc: "編寫並執行 Database Migration 腳本，安全修改生產環境資料庫結構。", descEn: "Write and execute safe database schema migrations in production.", diff: 3, rarity: "Rare", cat: "後端開發", badgeId: "database-guru" },
+            { id: 37, name: "排程任務 (Cron Job) ⏰", nameEn: "Cron Jobs Setup ⏰", desc: "在後端設定背景排程，定時清理資料庫垃圾資料或寄送通知信件。", descEn: "Schedule background processes for database cleanup or daily emails.", diff: 2, rarity: "Common", cat: "後端開發", badgeId: "database-guru" },
+            { id: 38, name: "異步任務佇列 (MQ) 📥", nameEn: "Task Queues 📥", desc: "引入 RabbitMQ, BullMQ 或 Celery 處理耗時的後端運算任務。", descEn: "Implement RabbitMQ, BullMQ, or Celery to handle heavy async jobs.", diff: 3, rarity: "Rare", cat: "後端開發", badgeId: "database-guru" },
+            { id: 39, name: "WebSocket 即時通訊 💬", nameEn: "WebSockets Chat 💬", desc: "利用 WebSocket 實作一個多人在線即時聊天室或推播廣播系統。", descEn: "Build a real-time multiplayer chatroom or broadcast system using WS.", diff: 3, rarity: "Rare", cat: "後端開發", badgeId: "database-guru" },
+            { id: 40, name: "資料庫分庫分表 🗺️", nameEn: "Database Sharding 🗺️", desc: "在千萬級數據場景下，實作資料庫的讀寫分離 (Read-Write Splitting) 或分片 (Sharding)。", descEn: "Implement DB Read-Write Splitting or Sharding for high-volume scale.", diff: 5, rarity: "Legendary", cat: "後端開發", badgeId: "database-guru" },
+
+            // DevOps & Cloud 運維雲端 (41-50)
+            { id: 41, name: "雲端虛擬機 ☁️", nameEn: "Cloud VM ☁️", desc: "在 AWS, GCP 或 Azure 上開通一台 VM，並成功用公網 IP 連接。", descEn: "Spin up a VM instance on AWS, GCP, or Azure and connect via SSH.", diff: 2, rarity: "Common", cat: "運維雲端", badgeId: "cloud-walker" },
+            { id: 42, name: "Docker 化部署 🐳", nameEn: "Docker Deployment 🐳", desc: "撰寫 Dockerfile 將專案打包成 Docker Image，並在伺服器上成功運行。", descEn: "Write a Dockerfile to package and deploy your project as a container.", diff: 2, rarity: "Common", cat: "運維雲端", badgeId: "cloud-walker" },
+            { id: 43, name: "網域與 HTTPS 🔒", nameEn: "Domain & HTTPS 🔒", desc: "購買一個專屬網域，並使用 Let's Encrypt 配置免費的 SSL 證書實現 HTTPS。", descEn: "Configure a custom domain with Let's Encrypt for TLS/HTTPS.", diff: 2, rarity: "Common", cat: "運維雲端", badgeId: "cloud-walker" },
+            { id: 44, name: "CI/CD 自動化 🤖", nameEn: "CI/CD Pipelines 🤖", desc: "使用 GitHub Actions, GitLab CI 或 Jenkins 實作代碼自動化測試與部署。", descEn: "Automate builds, tests, and deploys using GitHub Actions or GitLab CI.", diff: 3, rarity: "Rare", cat: "運維雲端", badgeId: "cloud-walker" },
+            { id: 45, name: "Linux 系統維運 🐧", nameEn: "Linux Operations 🐧", desc: "熟練使用 systemctl, journalctl, df -h 等指令診斷 Linux 伺服器健康狀況。", descEn: "Diagnose servers using Linux tools like systemctl, journalctl, df.", diff: 2, rarity: "Common", cat: "運維雲端", badgeId: "cloud-walker" },
+            { id: 46, name: "反向代理 (Nginx) 🔄", nameEn: "Nginx Proxy 🔄", desc: "配置 Nginx 作為反向代理伺服器，實現靜態資源分流與負載均衡。", descEn: "Configure Nginx as a reverse proxy, load balancer, or static host.", diff: 3, rarity: "Rare", cat: "運維雲端", badgeId: "cloud-walker" },
+            { id: 47, name: "基礎設施即代碼 (IaC) 🧱", nameEn: "Terraform IaC 🧱", desc: "使用 Terraform 或 Ansible 以代碼方式宣告並自動建立雲端硬體資源。", descEn: "Provision cloud infrastructure programmatically using Terraform/Ansible.", diff: 4, rarity: "Epic", cat: "運維雲端", badgeId: "cloud-walker" },
+            { id: 48, name: "容器編排 (K8s) ☸️", nameEn: "Kubernetes Orchestration ☸️", desc: "寫 YAML 配置檔，在 Kubernetes 集群上部署並實現服務的自動彈性伸縮。", descEn: "Deploy services on a Kubernetes cluster with auto-scaling YAML rules.", diff: 4, rarity: "Epic", cat: "運維雲端", badgeId: "cloud-walker" },
+            { id: 49, name: "日誌與監控 (Grafana) 📊", nameEn: "Monitoring Stack 📊", desc: "建立 Prometheus + Grafana 或 ELK 系統，收集並監控系統運行日誌與指標。", descEn: "Setup Grafana, Prometheus, or ELK stacks to monitor service health.", diff: 3, rarity: "Rare", cat: "運維雲端", badgeId: "cloud-walker" },
+            { id: 50, name: "無伺服器 (Serverless) ⚡", nameEn: "Serverless Deploy ⚡", desc: "使用 AWS Lambda 或 Cloudflare Workers 部署輕量化、隨開隨用的 Serverless 函式。", descEn: "Deploy event-driven functions on AWS Lambda or Cloudflare Workers.", diff: 3, rarity: "Rare", cat: "運維雲端", badgeId: "cloud-walker" },
+
+            // Systems & Architecture 系統架構 (51-60)
+            { id: 51, name: "物件導向設計 (OOP) 📐", nameEn: "OOP Design Patterns 📐", desc: "熟練運用封裝、繼承、多型，並在專案中套用常見設計模式 (如 Singleton, Factory)。", descEn: "Apply core OOP principles and common patterns like Singleton/Factory.", diff: 2, rarity: "Common", cat: "系統架構", badgeId: "architect" },
+            { id: 52, name: "函數式程式設計 (FP) 🧪", nameEn: "Functional Coding 🧪", desc: "使用 Map, Filter, Reduce 以及純函數 (Pure Function) 語法改寫複雜迴圈邏輯。", descEn: "Refactor logic using Map/Filter/Reduce and Pure Functions.", diff: 2, rarity: "Common", cat: "系統架構", badgeId: "architect" },
+            { id: 53, name: "資料結構掌握 🧱", nameEn: "Data Structures 🧱", desc: "搞懂 Array, Stack, Queue, Hash Table 與 Binary Tree 的內部運作機制。", descEn: "Master array, stack, queue, hash table, and binary tree internals.", diff: 2, rarity: "Common", cat: "系統架構", badgeId: "architect" },
+            { id: 54, name: "演算法刷題 🧮", nameEn: "LeetCode 100 🧮", desc: "在 LeetCode 平台累計刷過 100 道以上演算法題目，熟悉基本遞迴與搜尋。", descEn: "Solve 100+ LeetCode problems to understand search and recursion.", diff: 3, rarity: "Rare", cat: "系統架構", badgeId: "architect" },
+            { id: 55, name: "併發與多執行緒 🧵", nameEn: "Concurreny & Threads 🧵", desc: "處理多執行緒開發，並解決過死鎖 (Deadlock) 或競態條件 (Race Condition)。", descEn: "Handle multithreading, resolving race conditions or deadlocks.", diff: 3, rarity: "Rare", cat: "系統架構", badgeId: "architect" },
+            { id: 56, name: "系統三高設計 (高併發) 📈", nameEn: "High Concurrency 📈", desc: "設計一個能承受萬級 QPS 的高併發、高可用、高負載分散式系統架構。", descEn: "Design a distributed system architecture capable of high-scale QPS.", diff: 5, rarity: "Legendary", cat: "系統架構", badgeId: "architect" },
+            { id: 57, name: "記憶體流失排查 💧", nameEn: "Memory Leak Hunter 💧", desc: "使用 Profiling 工具追蹤代碼，揪出並解決隱藏的記憶體流失效能問題。", descEn: "Trace and resolve hidden memory leaks using profiling tools.", diff: 4, rarity: "Epic", cat: "系統架構", badgeId: "architect" },
+            { id: 58, name: "軟體架構模式 🏗️", nameEn: "Clean Architecture 🏗️", desc: "在實務專案中落實 Clean Architecture、DDD (網域驅動設計) 或微服務架構。", descEn: "Implement clean architecture, DDD, or microservices in production.", diff: 4, rarity: "Epic", cat: "系統架構", badgeId: "architect" },
+            { id: 59, name: "演算法複雜度分析 ⏱️", nameEn: "Big O Analysis ⏱️", desc: "能夠一眼看出代碼的時間複雜度 O(N) 與空間複雜度，並主動優化。", descEn: "Analyze Time/Space Big O complexity and optimize bottlenecks.", diff: 2, rarity: "Common", cat: "系統架構", badgeId: "architect" },
+            { id: 60, name: "編譯器與虛擬機 🔮", nameEn: "Compiler / Parser 🔮", desc: "從零開始手寫一個簡單的語法解析器 (Parser) 或直譯器 (Interpreter)。", descEn: "Write a simple parser, lexer, or bytecode interpreter from scratch.", diff: 5, rarity: "Legendary", cat: "系統架構", badgeId: "architect" },
+
+            // Testing & Quality 測試品質 (61-70)
+            { id: 61, name: "手寫單元測試 (Unit Test) 🧪", nameEn: "Unit Testing 🧪", desc: "使用 Jest, PyTest 或 JUnit 為專案核心邏輯撰寫單元測試覆蓋。", descEn: "Write test suites using Jest, PyTest, or JUnit to cover business logic.", diff: 2, rarity: "Common", cat: "測試品質", badgeId: "bug-slayer" },
+            { id: 62, name: "靜態程式碼分析 (Linter) 📏", nameEn: "Linter Style Rules 📏", desc: "配置 ESLint, Prettier 或 SonarQube，強迫自己遵循代碼風格規範。", descEn: "Configure ESLint, Prettier, or SonarQube to enforce code standards.", diff: 1, rarity: "Common", cat: "測試品質", badgeId: "bug-slayer" },
+            { id: 63, name: "重構祖傳代碼 (Refactor) 🧹", nameEn: "Refactor Legacy Code 🧹", desc: "在不改變原有功能的前提下，優化一整段難以閱讀的麵條代碼。", descEn: "Refactor a messy chunk of spaghetti code without breaking features.", diff: 2, rarity: "Common", cat: "測試品質", badgeId: "bug-slayer" },
+            { id: 64, name: "自動化整合測試 ⚙️", nameEn: "E2E Automation ⚙️", desc: "使用 Playwright, Cypress 或 Selenium 撰寫前端自動化測試腳本。", descEn: "Write browser automation scripts in Playwright, Cypress, or Selenium.", diff: 3, rarity: "Rare", cat: "測試品質", badgeId: "bug-slayer" },
+            { id: 65, name: "撰寫規格文件 📖", nameEn: "API Specs & Docs 📖", desc: "撰寫清晰的 README.md、API 規格書 (Swagger) 或開發流程說明。", descEn: "Write complete API docs (Swagger/OpenAPI) and clean README files.", diff: 2, rarity: "Common", cat: "測試品質", badgeId: "bug-slayer" },
+            { id: 66, name: "效能壓測 (Load Test) 🏋️‍♂️", nameEn: "Load Testing 🏋️‍♂️", desc: "使用 JMeter 或 k6 對伺服器進行壓力測試，找出系統的極限吞吐量。", descEn: "Run load/stress tests using JMeter or k6 to find bottlenecks.", diff: 3, rarity: "Rare", cat: "測試品質", badgeId: "bug-slayer" },
+            { id: 67, name: "測試驅動開發 (TDD) 🚀", nameEn: "TDD Practice 🚀", desc: "嘗試過「先寫測試、再寫代碼、後重構」的測試驅動開發流程。", descEn: "Practice test-driven development (write test -> fail -> code -> pass).", diff: 4, rarity: "Epic", cat: "測試品質", badgeId: "bug-slayer" },
+            { id: 68, name: "測試覆蓋率 90% 💯", nameEn: "90% Test Coverage 💯", desc: "專案的單一模組測試覆蓋率 (Coverage) 達到並維持在 90% 以上。", descEn: "Reach and maintain over 90% test coverage for a production module.", diff: 4, rarity: "Epic", cat: "測試品質", badgeId: "bug-slayer" },
+            { id: 69, name: "代碼評審 (Code Review) 👁️", nameEn: "Code Reviewer 👁️", desc: "在 Pull Request 中認真檢查他人的代碼，提出有建設性的優化意見。", descEn: "Conduct rigorous code reviews on PRs, giving constructive feedback.", diff: 2, rarity: "Common", cat: "測試品質", badgeId: "bug-slayer" },
+            { id: 70, name: "自動化測試守護 🛡️", nameEn: "CI Quality Gate 🛡️", desc: "實施 CI 門檻，測試未通過或覆蓋率下降時拒絕合併 Pull Request。", descEn: "Enforce strict CI gates where failing tests block branch merges.", diff: 3, rarity: "Rare", cat: "測試品質", badgeId: "bug-slayer" },
+
+            // Collaboration & Community 協作社群 (71-80)
+            { id: 71, name: "開源 PR 貢獻 🤝", nameEn: "Open Source PR 🤝", desc: "在 GitHub 上為開源專案提交 Pull Request 並被成功合併。", descEn: "Submit a Pull Request on GitHub to an open-source project and get it merged.", diff: 3, rarity: "Rare", cat: "協作社群", badgeId: "social-coder" },
+            { id: 72, name: "提報第一個 Issue 🐛", nameEn: "Report an Issue 🐛", desc: "在開源專案中發現 Bug，撰寫重現步驟並提交一個高品質的 Issue。", descEn: "File a well-formatted bug report/issue on an open-source repo.", diff: 2, rarity: "Common", cat: "協作社群", badgeId: "social-coder" },
+            { id: 73, name: "StackOverflow 救星 💬", nameEn: "StackOverflow Answer 💬", desc: "在 StackOverflow 上回答別人的編程問題，並獲得至少一個 Accepted Answer。", descEn: "Answer a question on StackOverflow and earn an 'Accepted Answer' check.", diff: 3, rarity: "Rare", cat: "協作社群", badgeId: "social-coder" },
+            { id: 74, name: "黑客松大賽 (Hackathon) 🏆", nameEn: "Hackathon Competitor 🏆", desc: "與隊友在 24-48 小時內極速開發出一個功能完整的 Prototype 參賽。", descEn: "Build and demo a prototype in a 24-48h hackathon competition.", diff: 3, rarity: "Rare", cat: "協作社群", badgeId: "social-coder" },
+            { id: 75, name: "技術部落格作者 ✍️", nameEn: "Tech Blog Author ✍️", desc: "撰寫並公開發表過至少 5 篇高品質的技術文章或開發筆記。", descEn: "Publish 5+ high-quality tech articles or development blogs.", diff: 2, rarity: "Common", cat: "協作社群", badgeId: "social-coder" },
+            { id: 76, name: "技術交流分享者 🎤", nameEn: "Meetup Speaker 🎤", desc: "在技術研討會 (如 COSCUP) 或社群聚會上擔任講者，分享開發經驗。", descEn: "Deliver a talk or presentation at a meetup or tech conference.", diff: 4, rarity: "Epic", cat: "協作社群", badgeId: "social-coder" },
+            { id: 77, name: "打造個人開源專案 📦", nameEn: "Publish a Package 📦", desc: "在 GitHub 上發布自己寫的工具包、套件或模板，供大眾免費使用。", descEn: "Create and open-source your own library, utility, or boilerplate.", diff: 3, rarity: "Rare", cat: "協作社群", badgeId: "social-coder" },
+            { id: 78, name: "擁有個人網頁 🌐", nameEn: "Portfolio Website 🌐", desc: "親自設計、編寫並部署一個展示個人作品集與簡歷的個人網站。", descEn: "Build and deploy a personal portfolio website showcasing your work.", diff: 2, rarity: "Common", cat: "協作社群", badgeId: "social-coder" },
+            { id: 79, name: "遠端協作開發 🗺️", nameEn: "Remote Developer 🗺️", desc: "與跨時區、跨國籍的團隊成員完全透過 Slack, Git, Notion 協作完成專案。", descEn: "Collaborate remotely with cross-timezone teams using Git/Slack/Notion.", diff: 2, rarity: "Common", cat: "協作社群", badgeId: "social-coder" },
+            { id: 80, name: "GitHub 綠色貢獻矩陣 🟩", nameEn: "30-Day Github Streak 🟩", desc: "在 GitHub 貢獻牆上達成連續 30 天每天提交 (Commit) 的紀錄。", descEn: "Achieve a consecutive 30-day commit streak on your GitHub graph.", diff: 4, rarity: "Epic", cat: "協作社群", badgeId: "social-coder" },
+
+            // Real-world & Disasters 修仙災難 (81-90)
+            { id: 81, name: "週五部署代碼 📅", nameEn: "Friday Deploy 📅", desc: "膽敢在週五下午 5:00 部署新功能到生產環境，且當晚沒出事。", descEn: "Deploy updates to production at 5:00 PM on a Friday without incident.", diff: 3, rarity: "Rare", cat: "修仙災難", badgeId: "survivor" },
+            { id: 82, name: "誤刪生產環境資料 💀", nameEn: "Drop Prod Data 💀", desc: "不小心下錯 DROP DATABASE 或 DELETE WITHOUT WHERE，隨後冷汗直流。", descEn: "Accidentally run a drop database or delete statement without where.", diff: 5, rarity: "Legendary", cat: "修仙災難", badgeId: "survivor" },
+            { id: 83, name: "生產環境崩潰救援 🚨", nameEn: "Production Outage 🚨", desc: "生產環境無預警當機，在主管盯視與客戶抱怨的壓力下快速修復問題。", descEn: "Debug and restore services in the middle of a major live outage.", diff: 4, rarity: "Epic", cat: "修仙災難", badgeId: "survivor" },
+            { id: 84, name: "通宵修 Bug 🌅", nameEn: "Coding All-Nighter 🌅", desc: "遭遇重大技術問題，在電腦前奮戰整夜，看著晨光亮起終於修復 bug。", descEn: "Work through the night, fixing critical bugs as dawn breaks.", diff: 4, rarity: "Epic", cat: "修仙災難", badgeId: "survivor" },
+            { id: 85, name: "被規格改動突襲 🦈", nameEn: "Last-Minute Spec Change 🦈", desc: "專案上線前三天被告知核心規格大改，被迫連夜重構程式碼。", descEn: "Receive a major specs overhaul 3 days before launch and pull through.", diff: 3, rarity: "Rare", cat: "修仙災難", badgeId: "survivor" },
+            { id: 86, name: "繼承祖傳屎山 💩", nameEn: "Spaghetti Inheritance 💩", desc: "接手維護沒有任何文件、變數命名為 a1, a2 的上萬行遺留代碼。", descEn: "Inherit a massive legacy codebase with zero docs and messy naming.", diff: 4, rarity: "Epic", cat: "修仙災難", badgeId: "survivor" },
+            { id: 87, name: "伺服器帳單爆表 💸", nameEn: "Cloud Bill Shock 💸", desc: "因死循環發送請求或開錯雲端硬體規格，收到令人心驚肉跳的巨大帳單。", descEn: "Receive a massive cloud bill due to infinite request loops or oversized VMs.", diff: 3, rarity: "Rare", cat: "修仙災難", badgeId: "survivor" },
+            { id: 88, name: "被 AI 胡說八道坑過 🤖", nameEn: "AI hallucination Trap 🤖", desc: "複製了 AI 生成的看似正確但有隱蔽致命 Bug 的代碼，除錯除到懷疑人生。", descEn: "Spend hours debugging an AI-generated script with hidden fatal errors.", diff: 2, rarity: "Common", cat: "修仙災難", badgeId: "survivor" },
+            { id: 89, name: "規格書查閱狂魔 📖", nameEn: "Spec Sheet Devourer 📖", desc: "遇到奇葩 bug 時，啃完上百頁 RFC 網路協定或底層規格書找到解法。", descEn: "Solve a bug by reading hundreds of pages of obscure RFC protocols.", diff: 3, rarity: "Rare", cat: "修仙災難", badgeId: "survivor" },
+            { id: 90, name: "優雅拒絕不合理需求 🙅‍♂️", nameEn: "Say No to PM 🙅‍♂️", desc: "拿出技術數據與時程評估，成功說服 PM 放棄不切實際的需求。", descEn: "Present technical data to successfully push back unreasonable requests.", diff: 3, rarity: "Rare", cat: "修仙災難", badgeId: "survivor" },
+
+            // Ultimate Challenges 極限挑戰 (91-100)
+            { id: 91, name: "發布 SaaS 獲利 💰", nameEn: "SaaS Profit 💰", desc: "自己開發並部署一個軟體服務 (SaaS)，獲得第一個付費訂閱用戶。", descEn: "Launch a SaaS project and acquire your first paying subscriber.", diff: 5, rarity: "Legendary", cat: "極限挑戰", badgeId: "legend" },
+            { id: 92, name: "獨立開發 App 上架 📱", nameEn: "App Store Launch 📱", desc: "獨立開發一款行動 App 或瀏覽器套件，並成功上架到商店。", descEn: "Develop and publish a mobile App or browser extension in store.", diff: 5, rarity: "Legendary", cat: "極限挑戰", badgeId: "legend" },
+            { id: 93, name: "GitHub 千星成就 ⭐", nameEn: "1,000 GitHub Stars ⭐", desc: "建立的開源專案在 GitHub 上獲得超過 1,000 個 Stars。", descEn: "Author a repository on GitHub that accumulates 1,000+ stars.", diff: 5, rarity: "Legendary", cat: "極限挑戰", badgeId: "legend" },
+            { id: 94, name: "百萬用戶挑戰 🚀", nameEn: "Million DAU Scale 🚀", desc: "主導設計與維護的系統，成功服務過百萬級日活躍用戶 (DAU)。", descEn: "Architect or scale a live system serving over 1,000,000+ DAU.", diff: 5, rarity: "Legendary", cat: "極限挑戰", badgeId: "legend" },
+            { id: 95, name: "寫出自己的程式語言 🔮", nameEn: "Create a Language 🔮", desc: "自製語法並寫出編譯器，讓自己的程式語言能編譯執行並印出 Hello World。", descEn: "Design and implement a programming language that compiles and runs.", diff: 5, rarity: "Legendary", cat: "極限挑戰", badgeId: "legend" },
+            { id: 96, name: "寫出作業系統或模擬器 💿", nameEn: "OS / Emulator from scratch 💿", desc: "從引導扇區開始手寫一個微型 OS，或寫出任天堂 GameBoy 模擬器。", descEn: "Write a mini OS kernel from boot sector, or build a retro GameBoy emulator.", diff: 5, rarity: "Legendary", cat: "極限挑戰", badgeId: "legend" },
+            { id: 97, name: "完全自主重構屎山 🥾", nameEn: "Refactor Legacy Mountain 🥾", desc: "將公司內部的祖傳龐大屎山專案完全重構，且上線零事故。", descEn: "Re-architect a giant, undocumented legacy system without any outages.", diff: 5, rarity: "Legendary", cat: "極限挑戰", badgeId: "legend" },
+            { id: 98, name: "白帽駭客滲透 🛡️", nameEn: "White-Hat Bounty 🛡️", desc: "發現大型網站或軟體的零日漏洞 (Zero-day)，獲得漏洞回報獎勵。", descEn: "Discover and report a zero-day vulnerability, earning a bug bounty.", diff: 5, rarity: "Legendary", cat: "極限挑戰", badgeId: "legend" },
+            { id: 99, name: "全能工程師 (Solo Dev) 🧙‍♂️", nameEn: "Solo Developer Legend 🧙‍♂️", desc: "獨自包辦需求、前後端、資料庫、DevOps，上線一款完整的商業產品。", descEn: "Build, launch, and host a complete commercial app entirely on your own.", diff: 5, rarity: "Legendary", cat: "極限挑戰", badgeId: "legend" },
+            { id: 100, name: "終極足跡地圖制霸 🗺️", nameEn: "Stack Domain Conqueror 🗺️", desc: "涉足技術領域版圖的所有 22 個技術領域，將技術版圖點亮完成！", descEn: "Master/light up all 22 nodes on the tech stack grid footprint map!", diff: 6, rarity: "Legendary", cat: "極限挑戰" }
+        ];
+
+        // --- 3. App State Variables ---
+        let appState = {
+            playerName: "開發者工程師",
+            playerAvatar: "💻",
+            checkedAchievements: [],
+            masteredTech: [],
+            customAchievements: [],
+            theme: "dark",
+            registered: false,
+            language: "zh-TW"
+        };
+
+        let activeFilters = {
+            search: "",
+            diff: "all",
+            rarity: "all",
+            status: "all",
+            badge: "all"
+        };
+
+        // --- 4. Web Audio Synthesizer ---
+        let audioCtx = null;
+        function playChime() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                const freqs = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                freqs.forEach((freq, idx) => {
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                });
+                
+                gainNode.gain.setValueAtTime(0.12, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                osc.start(now);
+                osc.stop(now + 0.6);
+            } catch (e) {
+                console.warn("Audio Context blocked or unsupported:", e);
+            }
+        }
+
+        // --- 5. Particles Confetti System ---
+        let confettiActive = false;
+        let confettiParticles = [];
+        const confettiColors = ['#58a6ff', '#3fb950', '#f1c40f', '#ff3e00', '#ab47bc', '#58d68d'];
+
+        function triggerConfetti() {
+            const canvas = document.getElementById('confettiCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            confettiParticles = [];
+            for (let i = 0; i < 90; i++) {
+                confettiParticles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height * 0.75,
+                    vx: (Math.random() - 0.5) * 18,
+                    vy: -Math.random() * 18 - 8,
+                    r: Math.random() * 5 + 3,
+                    color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+                    alpha: 1,
+                    gravity: 0.4,
+                    decay: Math.random() * 0.02 + 0.015
+                });
+            }
+            
+            if (!confettiActive) {
+                confettiActive = true;
+                requestAnimationFrame(updateConfetti);
+            }
+        }
+
+        function updateConfetti() {
+            const canvas = document.getElementById('confettiCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            let active = false;
+            confettiParticles.forEach(p => {
+                if (p.alpha > 0) {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += p.gravity;
+                    p.alpha -= p.decay;
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.alpha;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fill();
+                    active = true;
+                }
+            });
+            
+            ctx.globalAlpha = 1.0;
+            if (active) {
+                requestAnimationFrame(updateConfetti);
+            } else {
+                confettiActive = false;
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('confettiCanvas');
+            if (canvas) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+        });
+
+        // --- 6. Steam Style Notifications ---
+        let pendingNotifications = [];
+        let notificationTimeout = null;
+
+        function showNotification(title, desc, emoji) {
+            pendingNotifications.push({ title, desc, emoji });
+            if (notificationTimeout) clearTimeout(notificationTimeout);
+            notificationTimeout = setTimeout(flushNotifications, 200);
+        }
+
+        function flushNotifications() {
+            if (pendingNotifications.length === 0) return;
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const badgeNotifications = pendingNotifications.filter(n => n.title.includes("徽章") || n.title.includes("Badge"));
+            const regularNotifications = pendingNotifications.filter(n => !(n.title.includes("徽章") || n.title.includes("Badge")));
+
+            if (regularNotifications.length === 1) {
+                const item = regularNotifications[0];
+                createToastElement(item.title, item.desc, item.emoji);
+            } else if (regularNotifications.length > 1) {
+                const count = regularNotifications.length;
+                const lang = appState.language || 'zh-TW';
+                const title = lang === 'en' ? "🌟 Achievements Unlocked!" : "🌟 複數成就解除！";
+                const desc = lang === 'en' ? `You unlocked ${count} achievements at once!` : `您一口氣解鎖了 ${count} 個成就項目！`;
+                createToastElement(title, desc, "🌟");
+            }
+
+            badgeNotifications.forEach(badgeItem => {
+                createToastElement(badgeItem.title, badgeItem.desc, badgeItem.emoji);
+            });
+
+            pendingNotifications = [];
+        }
+
+        function createToastElement(title, desc, emoji) {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            if (container.children.length >= 4) {
+                container.children[0].remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.innerHTML = `
+                <div class="toast-icon">${emoji}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-desc">${desc}</div>
+                </div>
+            `;
+            container.appendChild(toast);
+            
+            playChime();
+            triggerConfetti();
+
+            setTimeout(() => {
+                toast.classList.add('hide');
+                toast.addEventListener('animationend', () => {
+                    toast.remove();
+                });
+            }, 3500);
+        }
+
+        // --- 7. LocalStorage and State Management ---
+        function saveState() {
+            localStorage.setItem('engineer_achievements_state', JSON.stringify(appState));
+        }
+
+        function loadState() {
+            const local = localStorage.getItem('engineer_achievements_state');
+            if (local) {
+                try {
+                    const parsed = JSON.parse(local);
+                    if (parsed) {
+                        if (parsed.playerName) appState.playerName = parsed.playerName;
+                        if (parsed.playerAvatar) appState.playerAvatar = parsed.playerAvatar;
+                        if (Array.isArray(parsed.checkedAchievements)) appState.checkedAchievements = parsed.checkedAchievements;
+                        if (Array.isArray(parsed.masteredTech)) appState.masteredTech = parsed.masteredTech;
+                        if (Array.isArray(parsed.visitedPrefectures) && appState.masteredTech.length === 0) {
+                            appState.masteredTech = parsed.visitedPrefectures;
+                        }
+                        if (Array.isArray(parsed.customAchievements)) appState.customAchievements = parsed.customAchievements;
+                        if (parsed.theme) appState.theme = parsed.theme;
+                        if (parsed.registered !== undefined) appState.registered = parsed.registered;
+                        if (parsed.language) appState.language = parsed.language;
+                    }
+                } catch (e) {
+                    console.error("Failed to load local storage state:", e);
+                }
+            }
+
+            // Strict default validation to prevent null/undefined property exceptions
+            if (!Array.isArray(appState.checkedAchievements)) appState.checkedAchievements = [];
+            if (!Array.isArray(appState.masteredTech)) appState.masteredTech = [];
+            if (!Array.isArray(appState.customAchievements)) appState.customAchievements = [];
+            
+            if (!appState.language) {
+                appState.language = "zh-TW";
+            }
+            const langSelect = document.getElementById('langSelector');
+            if (langSelect) langSelect.value = appState.language;
+
+            document.documentElement.setAttribute('data-theme', appState.theme);
+            const themeBtnText = document.getElementById('themeToggleText');
+            if (themeBtnText) {
+                themeBtnText.textContent = appState.theme === 'light' ? getTranslation("themeToggleTextDark") : getTranslation("themeToggleTextLight");
+            }
+            document.getElementById('playerName').value = appState.playerName;
+            document.getElementById('playerAvatar').textContent = appState.playerAvatar;
+
+            if (!appState.registered) {
+                document.getElementById('registerModalBackdrop').style.display = 'flex';
+                document.getElementById('registerPlayerName').value = '';
+                document.getElementById('registerAvatar').textContent = "💻";
+            }
+        }
+
+        function resetAllProgress() {
+            const lang = appState.language || 'zh-TW';
+            const confirmMsg = getTranslation("resetConfirm", "⚠️ 確定要重置所有成就與技術足跡嗎？此動作無法復原！");
+            if (confirm(confirmMsg)) {
+                appState.checkedAchievements = [];
+                appState.masteredTech = [];
+                appState.customAchievements.forEach(c => c.done = false);
+                saveState();
+                updateUI();
+                const resetTitle = getTranslation("resetTitle", "進度重置");
+                const resetDesc = getTranslation("resetDesc", "已清除所有勾選記錄");
+                showNotification(resetTitle, resetDesc, "🧹");
+            }
+        }
+
+        function exportBackup() {
+            const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `engineer_achievements_${appState.playerName}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importBackup() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    try {
+                        const parsed = JSON.parse(evt.target.result);
+                        if (parsed) {
+                            const validAchIds = new Set(achievementsData.map(a => a.id));
+                            const validTechIds = new Set(techStackData.map(p => p.id));
+                            
+                            if (Array.isArray(parsed.checkedAchievements)) {
+                                appState.checkedAchievements = parsed.checkedAchievements.filter(id => validAchIds.has(id));
+                            } else {
+                                appState.checkedAchievements = [];
+                            }
+                            
+                            const backupTech = parsed.masteredTech || parsed.visitedPrefectures || [];
+                            if (Array.isArray(backupTech)) {
+                                appState.masteredTech = backupTech.filter(id => validTechIds.has(id));
+                            } else {
+                                appState.masteredTech = [];
+                            }
+                            
+                            appState.customAchievements = sanitizeCustomAchievements(parsed.customAchievements);
+                            
+                            if (parsed.playerName) appState.playerName = parsed.playerName.trim().slice(0, 15);
+                            if (parsed.playerAvatar) appState.playerAvatar = parsed.playerAvatar;
+                            if (parsed.theme) {
+                                appState.theme = parsed.theme;
+                                document.documentElement.setAttribute('data-theme', appState.theme);
+                            }
+                            if (parsed.registered !== undefined) appState.registered = parsed.registered;
+                            if (parsed.language) {
+                                appState.language = parsed.language;
+                                const langSelect = document.getElementById('langSelector');
+                                if (langSelect) langSelect.value = appState.language;
+                            }
+                            
+                            saveState();
+                            document.getElementById('playerName').value = appState.playerName;
+                            document.getElementById('playerAvatar').textContent = appState.playerAvatar;
+                            
+                            updateUI();
+                            
+                            const title = getTranslation("importSuccessTitle", "導入成功");
+                            const desc = getTranslation("importSuccessDesc", "您的修仙進度已完全恢復");
+                            showNotification(title, desc, "💾");
+                        } else {
+                            throw new Error();
+                        }
+                    } catch (err) {
+                        const title = getTranslation("importErrorTitle", "導入失敗");
+                        const desc = getTranslation("importErrorDesc", "無效的備份檔案格式");
+                        showNotification(title, desc, "⚠️");
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function sanitizeCustomAchievements(arr) {
+            if (!Array.isArray(arr)) return [];
+            return arr.filter(item => item && item.id && item.name).slice(0, 10).map(item => ({
+                id: item.id,
+                name: item.name.slice(0, 30),
+                desc: (item.desc || "").slice(0, 60),
+                diff: Math.max(1, Math.min(5, parseInt(item.diff) || 1)),
+                done: !!item.done
+            }));
+        }
+
+        // --- 8. Level & Title System ---
+        function getLevelDetails(count) {
+            let level = Math.floor(count / 10);
+            let title = "";
+            
+            if (count >= 0 && count <= 10) title = getTranslation("levelTitle0", "🌱 Hello World 新手");
+            else if (count >= 11 && count <= 20) title = getTranslation("levelTitle1", "💻 語法熟練工");
+            else if (count >= 21 && count <= 30) title = getTranslation("levelTitle2", "🐛 Bug 捕手");
+            else if (count >= 31 && count <= 40) title = getTranslation("levelTitle3", "📦 模組封裝者");
+            else if (count >= 41 && count <= 50) title = getTranslation("levelTitle4", "🌐 系統架構師");
+            else if (count >= 51 && count <= 60) title = getTranslation("levelTitle5", "🚀 雲端部署專家");
+            else if (count >= 61 && count <= 70) title = getTranslation("levelTitle6", "🤖 AI 與自動化大師");
+            else if (count >= 71 && count <= 80) title = getTranslation("levelTitle7", "🔥 資深程式修仙者");
+            else if (count >= 81 && count <= 90) title = getTranslation("levelTitle8", "⚡ 終極全端極客");
+            else title = getTranslation("levelTitle9", "🧙‍♂️ 傳奇軟體架構宗師");
+
+            return { level, title };
+        }
+
+        // --- 9. Multilingual Translation Engine ---
+        const i18n = {
+            "zh-TW": {
+                "title": "開發者成就系統",
+                "subtitle": "點亮技術版圖 • 解鎖專業徽章 • 完成你的工程師修仙手帳",
+                "shareCardBtn": "分享成就卡",
+                "themeToggleTextLight": "切換淺色",
+                "themeToggleTextDark": "切換深色",
+                "exportBtn": "匯出備份",
+                "importBtn": "導入備份",
+                "resetBtn": "重置",
+                "playerNameInputTitle": "點擊修改暱稱",
+                "levelLabel": "等級",
+                "xpDisplaySuffix": "成就",
+                "radarChartTitle": "📊 分類探索度 (雷達圖)",
+                "badgeWallTitle": "🏆 徽章展示牆",
+                "mapTitle": "技術領域版圖",
+                "mapScrollHint": "💡 點擊技術節點以點亮/標記已涉足或掌握之領域",
+                "searchPlaceholder": "搜尋成就名稱或說明描述...",
+                "filterAllDiff": "所有難度",
+                "filterDiff6": "★★★★★★ (隱藏)",
+                "filterAllRarity": "所有稀有度",
+                "filterAllStatus": "所有狀態",
+                "filterStatusCompleted": "已解鎖",
+                "filterStatusUncompleted": "未解鎖",
+                "quickFilterLabel": "快速篩選徽章：",
+                "quickFilterAll": "全部",
+                "customAchTitle": "我的自訂成就",
+                "addCustomAchBtn": "新增自訂成就",
+                "footerCredit": "本專案受台灣旅行成就系統啟發，改造成為工程師/開發者專屬的成就系統。<br>成就進度會自動儲存在您瀏覽器的本地快取（LocalStorage）中，隱私安全無虞。<br>© 2026 Engineer Achievement List • ivanusto",
+                "avatarModalTitle": "選擇頭像 Emojis",
+                "closeBtn": "關閉",
+                "customAchModalTitleAdd": "🌟 新增自訂成就",
+                "customAchNameLabel": "成就名稱（必填，30 字內）",
+                "customAchDescLabel": "成就描述（選填，60 字內）",
+                "customAchDiffLabel": "難度星級",
+                "customAchDiff1": "★☆☆☆☆ (輕鬆達成)",
+                "customAchDiff2": "★★☆☆☆ (小有挑戰)",
+                "customAchDiff3": "★★★☆☆ (需要努力)",
+                "customAchDiff4": "★★★★☆ (相當困難)",
+                "customAchDiff5": "★★★★★ (畢生難忘)",
+                "cancelBtn": "取消",
+                "saveBtn": "儲存",
+                "shareModalTitle": "📸 生成個人成就卡",
+                "shareModalDesc": "您可以將此圖卡分享到社交媒體，炫耀您的工程師修仙歷練！",
+                "downloadPngBtn": "下載 PNG 圖片",
+                "registerTitle": "💻 開發者登錄",
+                "registerDesc": "歡迎光臨！請輸入您的開發者暱稱以開啟成就記錄：",
+                "registerAvatarHint": "（點擊選擇頭像）",
+                "registerStartBtn": "開始修仙！",
+                "levelTitle0": "🌱 Hello World 新手",
+                "levelTitle1": "💻 語法熟練工",
+                "levelTitle2": "🐛 Bug 捕手",
+                "levelTitle3": "📦 模組封裝者",
+                "levelTitle4": "🌐 系統架構師",
+                "levelTitle5": "🚀 雲端部署專家",
+                "levelTitle6": "🤖 AI 與自動化大師",
+                "levelTitle7": "🔥 資深程式修仙者",
+                "levelTitle8": "⚡ 終極全端極客",
+                "levelTitle9": "🧙‍♂️ 傳奇軟體架構宗師",
+                "resetConfirm": "⚠️ 確定要重置所有成就與技術足跡嗎？此動作無法復原！",
+                "resetTitle": "進度重置",
+                "resetDesc": "已清除所有勾選記錄",
+                "importSuccessTitle": "導入成功",
+                "importSuccessDesc": "您的修仙進度已完全恢復",
+                "importErrorTitle": "導入失敗",
+                "importErrorDesc": "無效的備份檔案格式",
+                "shareCardTitle": "工程師成就記錄卡",
+                "totalUnlockRateLabel": "總成就解鎖率",
+                "techStackLabel": "技術足跡",
+                "radarChartTitleLabel": "📊 分類探索度",
+                "badgeWallTitleLabel": "🏆 解鎖榮譽徽章牆",
+                "showcaseTitleLabel": "🌟 最引以為傲的修仙成就",
+                "customAchLabel": "自訂",
+                "customAchDefaultDesc": "由你親自訂立的專屬開發成就。",
+                "showcaseEmptyLabel": "尚無解鎖此欄位之高級成就，趕快去寫程式吧！",
+                "catLabel": "分類：",
+                "shareCardFooter": "本成就卡由「開發者成就系統」產出",
+                "shareCardNotifyTitle": "圖卡下載成功",
+                "shareCardNotifyDesc": "歡迎分享到 Threads 或 GitHub！",
+                "regSuccessTitle": "修仙開始！",
+                "regSuccessDesc": "開發者 {name}，祝您寫程式零 Bug！",
+                "defaultPlayerName": "開發者工程師",
+                "avatarUpdated": "頭像已更新",
+                "pleaseEnterNickname": "請輸入暱稱！",
+                "customAchLimitAlert": "自訂成就上限為 10 個，請先刪除一些舊成就！",
+                "customAchFillAlert": "請填寫成就名稱！",
+                "unlockBadgeToastTitle": "🏆 徽章解鎖！",
+                "unlockBadgeToastDesc": "您解鎖了【{badgeName}】徽章！",
+                "unlockAchToastTitle": "🌟 成就解鎖！",
+                "unlockAchToastDesc": "【{achName}】解鎖成功！"
+            },
+            "en": {
+                "title": "Developer Achievement System",
+                "subtitle": "Master Tech Stacks • Unlock Milestones • Track Your Software Engineering Journey",
+                "shareCardBtn": "Share Card",
+                "themeToggleTextLight": "Switch Light",
+                "themeToggleTextDark": "Switch Dark",
+                "exportBtn": "Export",
+                "importBtn": "Import",
+                "resetBtn": "Reset",
+                "playerNameInputTitle": "Click to edit nickname",
+                "levelLabel": "Level",
+                "xpDisplaySuffix": "achievements",
+                "radarChartTitle": "📊 Domain Mastery (Radar Chart)",
+                "badgeWallTitle": "🏆 Badge Showcase",
+                "mapTitle": "Tech Stack Domain Map",
+                "mapScrollHint": "💡 Click tech nodes to light up or mark mastered domains",
+                "searchPlaceholder": "Search achievements...",
+                "filterAllDiff": "All Difficulties",
+                "filterDiff6": "★★★★★★ (Hidden)",
+                "filterAllRarity": "All Rarities",
+                "filterAllStatus": "All Status",
+                "filterStatusCompleted": "Unlocked",
+                "filterStatusUncompleted": "Locked",
+                "quickFilterLabel": "Quick Badge Filter:",
+                "quickFilterAll": "All",
+                "customAchTitle": "My Custom Achievements",
+                "addCustomAchBtn": "Add Custom Achievement",
+                "footerCredit": "Inspired by Taiwan Travel Achievement List, redesigned as a tailored milestone tracking system for developers.<br>Progress is saved locally (LocalStorage) on your device.<br>© 2026 Engineer Achievement List • ivanusto",
+                "avatarModalTitle": "Select Avatar Emojis",
+                "closeBtn": "Close",
+                "customAchModalTitleAdd": "🌟 Add Custom Achievement",
+                "customAchNameLabel": "Name (Required, max 30 chars)",
+                "customAchDescLabel": "Description (Optional, max 60 chars)",
+                "customAchDiffLabel": "Difficulty Stars",
+                "customAchDiff1": "★☆☆☆☆ (Easy Task)",
+                "customAchDiff2": "★★☆☆☆ (Light Challenge)",
+                "customAchDiff3": "★★★☆☆ (Needs Effort)",
+                "customAchDiff4": "★★★★☆ (Hard Task)",
+                "customAchDiff5": "★★★★★ (Epic Achievement)",
+                "cancelBtn": "Cancel",
+                "saveBtn": "Save",
+                "shareModalTitle": "📸 Generate Dev Card",
+                "shareModalDesc": "Share this achievements digest on social media to show off your developer credentials!",
+                "downloadPngBtn": "Download PNG Card",
+                "registerTitle": "💻 Developer Login",
+                "registerDesc": "Welcome! Please enter a nickname to start tracking your achievements:",
+                "registerAvatarHint": "(Click avatar to change)",
+                "registerStartBtn": "Start Coding!",
+                "levelTitle0": "🌱 Hello World Rookie",
+                "levelTitle1": "💻 Syntactic Worker",
+                "levelTitle2": "🐛 Bug Catcher",
+                "levelTitle3": "📦 Module Packager",
+                "levelTitle4": "🌐 System Architect",
+                "levelTitle5": "🚀 Cloud Specialist",
+                "levelTitle6": "🤖 AI & Automation Master",
+                "levelTitle7": "🔥 Coding Cultivator",
+                "levelTitle8": "⚡ Fullstack Geek",
+                "levelTitle9": "🧙‍♂️ Software Arch-Mage",
+                "resetConfirm": "⚠️ Are you sure you want to reset all achievements and stack grid? This cannot be undone!",
+                "resetTitle": "Progress Reset",
+                "resetDesc": "Cleared all checked milestones",
+                "importSuccessTitle": "Import Success",
+                "importSuccessDesc": "Your progress has been completely restored",
+                "importErrorTitle": "Import Failed",
+                "importErrorDesc": "Invalid backup file format",
+                "shareCardTitle": "Developer Achievement Card",
+                "totalUnlockRateLabel": "Global Unlock Rate",
+                "techStackLabel": "Stack Grid",
+                "radarChartTitleLabel": "📊 Domain Mastery",
+                "badgeWallTitleLabel": "🏆 Badge Showcase Wall",
+                "showcaseTitleLabel": "🌟 Proudest Coding Achievements",
+                "customAchLabel": "Custom",
+                "customAchDefaultDesc": "A custom milestone defined by yourself.",
+                "showcaseEmptyLabel": "No epic achievements unlocked in this slot yet. Go write code!",
+                "catLabel": "Category: ",
+                "shareCardFooter": "Generated by Developer Achievement System",
+                "shareCardNotifyTitle": "Card Downloaded",
+                "shareCardNotifyDesc": "Feel free to share it on Threads or GitHub!",
+                "regSuccessTitle": "Coding Initiated!",
+                "regSuccessDesc": "Welcome, dev {name}! May your builds be green!",
+                "defaultPlayerName": "Developer Engineer",
+                "avatarUpdated": "Avatar Updated",
+                "pleaseEnterNickname": "Please enter a nickname!",
+                "customAchLimitAlert": "Custom achievements limit is 10. Please delete some first!",
+                "customAchFillAlert": "Please enter achievement name!",
+                "unlockBadgeToastTitle": "🏆 Badge Unlocked!",
+                "unlockBadgeToastDesc": "You unlocked the [{badgeName}] badge!",
+                "unlockAchToastTitle": "🌟 Milestone Unlocked!",
+                "unlockAchToastDesc": "[{achName}] unlocked successfully!"
+            }
+        };
+
+        function getTranslation(key, defaultValue = "") {
+            const lang = appState.language || "zh-TW";
+            if (i18n[lang] && i18n[lang][key] !== undefined) {
+                return i18n[lang][key];
+            }
+            return defaultValue || key;
+        }
+
+        function updateStaticTranslations() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.innerHTML = getTranslation(key, el.innerHTML);
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                el.setAttribute('placeholder', getTranslation(key, el.getAttribute('placeholder')));
+            });
+            document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                const key = el.getAttribute('data-i18n-title');
+                el.setAttribute('title', getTranslation(key, el.getAttribute('title')));
+            });
+        }
+
+        function getCategoryTranslation(cat) {
+            const lang = appState.language || 'zh-TW';
+            if (lang === 'en') {
+                const catMap = {
+                    "語法基礎": "Syntax & Basics",
+                    "開發工具": "Dev Tools",
+                    "前端開發": "Frontend",
+                    "後端開發": "Backend",
+                    "運維雲端": "DevOps & Cloud",
+                    "系統架構": "Systems & Arch",
+                    "測試品質": "Testing & QA",
+                    "協作社群": "Collaboration",
+                    "修仙災難": "Real-world & Disasters",
+                    "極限挑戰": "Ultimate Challenges",
+                    "自訂": "Custom"
+                };
+                return catMap[cat] || cat;
+            }
+            return cat;
+        }
+
+        function getBadgeName(badge) {
+            return appState.language === 'en' ? badge.nameEn : badge.name;
+        }
+
+        function getBadgeDesc(badge) {
+            return appState.language === 'en' ? badge.descEn : badge.desc;
+        }
+
+        // --- 10. Interactive Stack Grid Rendering ---
+        let techCellMap = {};
+        
+        function renderTechMap() {
+            const mapContainer = document.getElementById('techStackGridMap');
+            if (!mapContainer) return;
+            mapContainer.innerHTML = '';
+            techCellMap = {};
+
+            // We create a grid structure where Row 3 has empty cells on cols 1, 3, 5
+            for (let r = 1; r <= 5; r++) {
+                for (let c = 1; c <= 5; c++) {
+                    const tech = techStackData.find(t => t.row === r && t.col === c);
+                    if (tech) {
+                        const cell = document.createElement('div');
+                        cell.className = 'tech-cell';
+                        cell.textContent = appState.language === 'en' ? tech.nameEn : tech.name;
+                        cell.style.gridRow = `${r} / span 1`;
+                        cell.style.gridColumn = `${c} / span 1`;
+                        cell.style.backgroundColor = tech.color + '15';
+                        cell.style.borderColor = tech.color + '66';
+                        cell.setAttribute('role', 'button');
+                        cell.setAttribute('tabindex', '0');
+                        cell.setAttribute('aria-label', appState.language === 'en' ? tech.nameEn : tech.name);
+
+                        cell.onclick = () => toggleTechNode(tech.id);
+                        cell.onkeydown = (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                toggleTechNode(tech.id);
+                            }
+                        };
+                        techCellMap[tech.id] = cell;
+                        mapContainer.appendChild(cell);
+                    } else {
+                        // Empty spacer cell
+                        const spacer = document.createElement('div');
+                        spacer.className = 'tech-cell empty-cell';
+                        spacer.style.gridRow = `${r} / span 1`;
+                        spacer.style.gridColumn = `${c} / span 1`;
+                        mapContainer.appendChild(spacer);
+                    }
+                }
+            }
+            updateTechMap();
+        }
+
+        function updateTechMap() {
+            const mastered = new Set(appState.masteredTech);
+            techStackData.forEach(tech => {
+                const cell = techCellMap[tech.id];
+                if (!cell) return;
+                const isMastered = mastered.has(tech.id);
+                cell.classList.toggle('mastered', isMastered);
+                cell.setAttribute('aria-pressed', String(isMastered));
+            });
+
+            renderDomainProgress();
+        }
+
+        function toggleTechNode(techId) {
+            const idx = appState.masteredTech.indexOf(techId);
+            const techObj = techStackData.find(t => t.id === techId);
+            const isAddition = idx === -1;
+
+            if (isAddition) {
+                appState.masteredTech.push(techId);
+                const cell = techCellMap[techId];
+                if (cell) {
+                    cell.classList.add('stamp-anim');
+                    cell.addEventListener('animationend', () => cell.classList.remove('stamp-anim'), { once: true });
+                }
+                const name = appState.language === 'en' ? techObj.nameEn : techObj.name;
+                const title = getTranslation("unlockAchToastTitle");
+                const desc = getTranslation("unlockAchToastDesc").replace("{achName}", name);
+                showNotification(title, desc, "💻");
+            } else {
+                appState.masteredTech.splice(idx, 1);
+            }
+            saveState();
+            updateUI();
+        }
+
+        function renderDomainProgress() {
+            const panel = document.getElementById('regionsStatsPanel');
+            if (!panel) return;
+            panel.innerHTML = '';
+
+            const mastered = new Set(appState.masteredTech);
+            const domains = Array.from(new Set(techStackData.map(p => appState.language === 'en' ? p.domainEn : p.domain)));
+
+            domains.forEach(domain => {
+                const techsInDom = techStackData.filter(p => (appState.language === 'en' ? p.domainEn : p.domain) === domain);
+                const masteredInDom = techsInDom.filter(p => mastered.has(p.id));
+                const pct = techsInDom.length > 0 ? Math.round((masteredInDom.length / techsInDom.length) * 100) : 0;
+
+                const badge = document.createElement('div');
+                badge.className = 'region-badge';
+                badge.innerHTML = `
+                    <div class="region-badge-title">${domain}</div>
+                    <div class="region-badge-value">${masteredInDom.length} / ${techsInDom.length}</div>
+                    <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); margin-top:2px;">${pct}%</div>
+                `;
+                panel.appendChild(badge);
+            });
+        }
+
+        // --- 11. Canvas Radar Chart Renderer ---
+        function drawRadar(ctx, cx, cy, r, options) {
+            const domains = ["Frontend", "Backend", "Tools", "DevOps", "CS & AI"];
+            const domainsZHTW = ["前端開發", "後端開發", "開發工具", "運維雲端", "電腦科學"];
+            const labels = appState.language === 'en' ? domains : domainsZHTW;
+            const numAxes = domains.length;
+            const angleStep = (Math.PI * 2) / numAxes;
+
+            const scores = domains.map(dom => {
+                const inDom = techStackData.filter(p => p.domain === dom || p.domainEn === dom);
+                const mastered = inDom.filter(p => appState.masteredTech.includes(p.id));
+                return inDom.length > 0 ? (mastered.length / inDom.length) : 0;
+            });
+
+            // Grid Web Drawing
+            ctx.strokeStyle = options.gridColor;
+            ctx.lineWidth = 1;
+            for (let i = 1; i <= 4; i++) {
+                const curR = r * (i / 4);
+                ctx.beginPath();
+                for (let j = 0; j < numAxes; j++) {
+                    const angle = j * angleStep - Math.PI / 2;
+                    const x = cx + Math.cos(angle) * curR;
+                    const y = cy + Math.sin(angle) * curR;
+                    if (j === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+            }
+
+            // Draw Web Axis Rays
+            ctx.strokeStyle = options.axisColor || options.gridColor;
+            for (let j = 0; j < numAxes; j++) {
+                const angle = j * angleStep - Math.PI / 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+                ctx.stroke();
+            }
+
+            // Draw polygon shape of values
+            ctx.fillStyle = options.polyFill;
+            ctx.strokeStyle = options.polyStroke;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            for (let j = 0; j < numAxes; j++) {
+                const angle = j * angleStep - Math.PI / 2;
+                const valueR = r * Math.max(0.08, scores[j]);
+                const x = cx + Math.cos(angle) * valueR;
+                const y = cy + Math.sin(angle) * valueR;
+                if (j === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw Value Dots
+            if (options.withDots) {
+                ctx.fillStyle = options.polyStroke;
+                for (let j = 0; j < numAxes; j++) {
+                    const angle = j * angleStep - Math.PI / 2;
+                    const valueR = r * Math.max(0.08, scores[j]);
+                    ctx.beginPath();
+                    ctx.arc(cx + Math.cos(angle) * valueR, cy + Math.sin(angle) * valueR, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Draw labels
+            ctx.fillStyle = options.labelColor;
+            ctx.font = options.labelFont;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const emojis = ["🎨", "💾", "🛠️", "🐳", "🧠"];
+            for (let j = 0; j < numAxes; j++) {
+                const angle = j * angleStep - Math.PI / 2;
+                const lx = cx + Math.cos(angle) * (options.labelDist || r + 24);
+                let ly = cy + Math.sin(angle) * (options.labelDist || r + 24);
+                if (options.labelYExtra && Math.sin(angle) > 0.1) ly += options.labelYExtra;
+
+                let txt = labels[j];
+                if (options.withEmojis) txt = emojis[j] + " " + txt;
+                ctx.fillText(txt, lx, ly);
+            }
+        }
+
+        function renderRadarChart() {
+            const canvas = document.getElementById('radarCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            const size = 300;
+            const dpr = window.devicePixelRatio || 1;
+            if (canvas.width !== size * dpr) {
+                canvas.width = size * dpr;
+                canvas.height = size * dpr;
+            }
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, size, size);
+
+            const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+            drawRadar(ctx, size / 2, size / 2, 90, {
+                gridColor: isDark ? '#30363d' : '#d0d7de',
+                axisColor: isDark ? '#30363d' : '#d0d7de',
+                labelColor: isDark ? '#c9d1d9' : '#24292f',
+                polyFill: isDark ? 'rgba(88, 166, 255, 0.25)' : 'rgba(9, 105, 218, 0.2)',
+                polyStroke: isDark ? '#58a6ff' : '#0969da',
+                labelFont: 'bold 11px sans-serif',
+                labelDist: 112,
+                labelYExtra: 2,
+                withDots: true,
+                withEmojis: true
+            });
+        }
+
+        // --- 12. Category Scores Calculation ---
+        const CATEGORIES = ["語法基礎", "開發工具", "前端開發", "後端開發", "運維雲端", "系統架構", "測試品質", "協作社群", "修仙災難", "極限挑戰"];
+
+        function getCategoryScores() {
+            const done = new Set(appState.checkedAchievements);
+            return CATEGORIES.map(cat => {
+                const inCat = achievementsData.filter(a => a.cat === cat);
+                const doneCount = inCat.filter(a => done.has(a.id)).length;
+                return inCat.length > 0 ? (doneCount / inCat.length) : 0;
+            });
+        }
+
+        // --- 13. Dynamic Achievements Database Renderer ---
+        let achCardRefs = {};
+        let categoryRefs = {};
+        const collapsiblesState = {};
+
+        function buildAchievements() {
+            const container = document.getElementById('achievementsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            achCardRefs = {};
+            categoryRefs = {};
+
+            CATEGORIES.forEach(cat => {
+                const inCat = achievementsData.filter(a => a.cat === cat);
+
+                const catWrapper = document.createElement('div');
+                catWrapper.className = 'category-wrapper';
+                const catKey = 'collapsed-' + cat;
+                if (collapsiblesState[catKey]) catWrapper.classList.add('collapsed');
+
+                const header = document.createElement('div');
+                header.className = 'category-header';
+                
+                const catTitle = getCategoryTranslation(cat);
+                const catEmojis = {
+                    "語法基礎": "🧠", "開發工具": "🛠️", "前端開發": "🎨", "後端開發": "💾", "運維雲端": "🐳",
+                    "系統架構": "🏗️", "測試品質": "🛡️", "協作社群": "🤝", "修仙災難": "🔥", "極限挑戰": "🧙‍♂️"
+                };
+                header.innerHTML = `
+                    <span class="category-header-title">${catEmojis[cat] || "🌟"} ${catTitle}</span>
+                    <span class="category-progress-pill">0 / ${inCat.length}</span>
+                `;
+                
+                header.onclick = () => {
+                    const collapsed = catWrapper.classList.toggle('collapsed');
+                    collapsiblesState[catKey] = collapsed;
+                };
+
+                const content = document.createElement('div');
+                content.className = 'category-content';
+
+                inCat.forEach(ach => {
+                    const card = document.createElement('div');
+                    const isHidden = ach.diff === 6;
+                    card.className = `achievement-card ${isHidden ? 'hidden-ach' : ''}`;
+                    card.setAttribute('role', 'checkbox');
+                    card.onclick = () => toggleAchievement(ach.id);
+
+                    const stars = '★'.repeat(Math.min(ach.diff, 5)) + '☆'.repeat(Math.max(0, 5 - ach.diff));
+                    const rarityText = ach.rarity;
+                    const rarityClass = 'rarity-' + ach.rarity.toLowerCase();
+
+                    const name = appState.language === 'en' ? ach.nameEn : ach.name;
+                    const desc = appState.language === 'en' ? ach.descEn : ach.desc;
+
+                    card.innerHTML = `
+                        <div class="ach-checkbox-container">
+                            <div class="ach-checkbox-custom">✓</div>
+                        </div>
+                        <div class="ach-details">
+                            <div class="ach-title-row">
+                                <span class="ach-title">${name}</span>
+                            </div>
+                            <span class="ach-desc">${desc}</span>
+                            <div class="ach-meta">
+                                <span class="difficulty-stars">${stars}</span>
+                                <span class="rarity-pill ${rarityClass}">${rarityText}</span>
+                            </div>
+                        </div>
+                    `;
+
+                    achCardRefs[ach.id] = card;
+                    content.appendChild(card);
+                });
+
+                catWrapper.appendChild(header);
+                catWrapper.appendChild(content);
+                container.appendChild(catWrapper);
+                categoryRefs[cat] = catWrapper;
+            });
+
+            updateAchievementsUI();
+        }
+
+        function updateAchievementsUI() {
+            const done = new Set(appState.checkedAchievements);
+
+            // Update achievements cards checked status
+            achievementsData.forEach(ach => {
+                const card = achCardRefs[ach.id];
+                if (!card) return;
+                const isDone = done.has(ach.id);
+                card.classList.toggle('done', isDone);
+                card.setAttribute('aria-checked', String(isDone));
+            });
+
+            // Update category progress headers
+            CATEGORIES.forEach(cat => {
+                const wrapper = categoryRefs[cat];
+                if (!wrapper) return;
+                const inCat = achievementsData.filter(a => a.cat === cat);
+                const countDone = inCat.filter(a => done.has(a.id)).length;
+                const pill = wrapper.querySelector('.category-progress-pill');
+                if (pill) pill.textContent = `${countDone} / ${inCat.length}`;
+            });
+
+            filterAchievementsList();
+        }
+
+        function toggleAchievement(achId) {
+            const doneSet = new Set(appState.checkedAchievements);
+            const ach = achievementsData.find(a => a.id === achId);
+            if (!ach) return;
+
+            if (doneSet.has(achId)) {
+                appState.checkedAchievements = appState.checkedAchievements.filter(id => id !== achId);
+            } else {
+                appState.checkedAchievements.push(achId);
+                const card = achCardRefs[achId];
+                if (card) {
+                    card.classList.add('stamp-anim');
+                    card.addEventListener('animationend', () => card.classList.remove('stamp-anim'), { once: true });
+                }
+                const title = getTranslation("unlockAchToastTitle");
+                const name = appState.language === 'en' ? ach.nameEn : ach.name;
+                const desc = getTranslation("unlockAchToastDesc").replace("{achName}", name);
+                showNotification(title, desc, "🌟");
+            }
+            saveState();
+            updateUI();
+        }
+
+        // --- 14. Filters Handlers ---
+        function handleFilterChange() {
+            activeFilters.search = document.getElementById('searchFilter').value.toLowerCase().trim();
+            activeFilters.diff = document.getElementById('diffFilter').value;
+            activeFilters.rarity = document.getElementById('rarityFilter').value;
+            activeFilters.status = document.getElementById('statusFilter').value;
+
+            filterAchievementsList();
+        }
+
+        function filterAchievementsList() {
+            const done = new Set(appState.checkedAchievements);
+
+            achievementsData.forEach(ach => {
+                const card = achCardRefs[ach.id];
+                if (!card) return;
+
+                const name = (appState.language === 'en' ? ach.nameEn : ach.name).toLowerCase();
+                const desc = (appState.language === 'en' ? ach.descEn : ach.desc).toLowerCase();
+                const matchesSearch = name.includes(activeFilters.search) || desc.includes(activeFilters.search);
+                const matchesDiff = activeFilters.diff === 'all' || ach.diff === parseInt(activeFilters.diff);
+                const matchesRarity = activeFilters.rarity === 'all' || ach.rarity === activeFilters.rarity;
+                
+                let matchesStatus = true;
+                if (activeFilters.status === 'completed') matchesStatus = done.has(ach.id);
+                else if (activeFilters.status === 'uncompleted') matchesStatus = !done.has(ach.id);
+
+                let matchesBadge = true;
+                if (activeFilters.badge !== 'all') {
+                    matchesBadge = ach.badgeId === activeFilters.badge;
+                }
+
+                const visible = matchesSearch && matchesDiff && matchesRarity && matchesStatus && matchesBadge;
+                card.style.display = visible ? 'flex' : 'none';
+            });
+
+            // Auto-hide completely empty category panels
+            CATEGORIES.forEach(cat => {
+                const wrapper = categoryRefs[cat];
+                if (!wrapper) return;
+                const inCat = achievementsData.filter(a => a.cat === cat);
+                const cards = inCat.map(a => achCardRefs[a.id]).filter(c => c);
+                const hasVisible = cards.some(c => c.style.display !== 'none');
+                
+                // If filtering is active, only show category if it has visible cards
+                const filtering = activeFilters.search || activeFilters.diff !== 'all' || activeFilters.rarity !== 'all' || activeFilters.status !== 'all' || activeFilters.badge !== 'all';
+                wrapper.style.display = (!filtering || hasVisible) ? 'flex' : 'none';
+            });
+        }
+
+        // --- 15. Badges Core Logic ---
+        function getBadgeProgress(badgeId) {
+            const badge = badgeData.find(b => b.id === badgeId);
+            if (!badge) return { current: 0, threshold: 0, unlocked: false };
+            
+            const done = new Set(appState.checkedAchievements);
+            const inCat = achievementsData.filter(a => a.cat === badge.catLink);
+            const current = inCat.filter(a => done.has(a.id)).length;
+            const unlocked = current >= badge.threshold;
+            
+            return { current, threshold: badge.threshold, unlocked };
+        }
+
+        let unlockedBadgesCache = new Set();
+        function renderBadgeWall() {
+            const grid = document.getElementById('badgeWallGrid');
+            const container = document.getElementById('quickFilterTagsContainer');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+            if (container && container.children.length === 0) {
+                container.innerHTML = '';
+            }
+
+            badgeData.forEach(badge => {
+                const stat = getBadgeProgress(badge.id);
+                const name = getBadgeName(badge);
+                const desc = getBadgeDesc(badge);
+
+                if (stat.unlocked && !unlockedBadgesCache.has(badge.id)) {
+                    // Triggers once when a badge transitions from locked to unlocked
+                    unlockedBadgesCache.add(badge.id);
+                    if (appState.registered) {
+                        const bTitle = getTranslation("unlockBadgeToastTitle");
+                        const bDesc = getTranslation("unlockBadgeToastDesc").replace("{badgeName}", name);
+                        showNotification(bTitle, bDesc, badge.emoji);
+                    }
+                } else if (!stat.unlocked && unlockedBadgesCache.has(badge.id)) {
+                    unlockedBadgesCache.delete(badge.id);
+                }
+
+                // Add to wall grid
+                const item = document.createElement('div');
+                item.className = 'badge-item' + (stat.unlocked ? ' unlocked' : '');
+                item.innerHTML = `
+                    ${badge.emoji}
+                    <div class="badge-tooltip">
+                        <div class="badge-tooltip-title">${name}</div>
+                        <div class="badge-tooltip-desc">${desc} (${stat.current}/${stat.threshold})</div>
+                    </div>
+                `;
+                item.onclick = () => filterByBadge(badge.id);
+                grid.appendChild(item);
+
+                // Add quick filter tag if container is empty
+                if (container && container.children.length < badgeData.length) {
+                    const tag = document.createElement('span');
+                    tag.className = 'quick-filter-tag';
+                    tag.id = `badge-tag-${badge.id}`;
+                    tag.innerHTML = `${badge.emoji} <span>${name}</span>`;
+                    tag.onclick = () => filterByBadge(badge.id);
+                    container.appendChild(tag);
+                }
+            });
+        }
+
+        function filterByBadge(badgeId) {
+            activeFilters.badge = badgeId;
+
+            // Highlight active tag
+            document.querySelectorAll('.quick-filter-tag').forEach(tag => tag.classList.remove('active'));
+            if (badgeId === 'all') {
+                document.getElementById('badge-all-tag').classList.add('active');
+            } else {
+                const activeTag = document.getElementById(`badge-tag-${badgeId}`);
+                if (activeTag) activeTag.classList.add('active');
+            }
+
+            filterAchievementsList();
+        }
+
+        // --- 16. Custom Achievements Implementations ---
+        function renderCustomAchievements() {
+            const list = document.getElementById('customAchList');
+            if (!list) return;
+            list.innerHTML = '';
+
+            appState.customAchievements.forEach(ach => {
+                const card = document.createElement('div');
+                card.className = 'custom-ach-card';
+                
+                const stars = '★'.repeat(ach.diff) + '☆'.repeat(5 - ach.diff);
+                const doneClass = ach.done ? 'done' : '';
+
+                card.innerHTML = `
+                    <div class="ach-checkbox-container" onclick="toggleCustomAch(${ach.id})">
+                        <div class="ach-checkbox-custom ${ach.done ? 'done' : ''}" style="${ach.done ? 'background: var(--accent-green); border-color:var(--accent-green); color:#fff;' : ''}">✓</div>
+                    </div>
+                    <div class="ach-details" onclick="toggleCustomAch(${ach.id})" style="cursor:pointer;">
+                        <span class="ach-title">${ach.name}</span>
+                        <span class="ach-desc">${ach.desc || getTranslation("customAchDefaultDesc")}</span>
+                        <div class="ach-meta">
+                            <span class="difficulty-stars">${stars}</span>
+                            <span class="rarity-pill rarity-custom">${getTranslation("customAchLabel")}</span>
+                        </div>
+                    </div>
+                    <button class="delete-custom-btn" onclick="deleteCustomAch(${ach.id})" title="Delete">🗑️</button>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function openCustomAchModal() {
+            if (appState.customAchievements.length >= 10) {
+                alert(getTranslation("customAchLimitAlert"));
+                return;
+            }
+            document.getElementById('customAchName').value = '';
+            document.getElementById('customAchDesc').value = '';
+            document.getElementById('customAchDiff').value = '1';
+            document.getElementById('customAchModalBackdrop').style.display = 'flex';
+        }
+
+        function closeCustomAchModal() {
+            document.getElementById('customAchModalBackdrop').style.display = 'none';
+        }
+
+        function saveCustomAchievement() {
+            const name = document.getElementById('customAchName').value.trim();
+            const desc = document.getElementById('customAchDesc').value.trim();
+            const diff = parseInt(document.getElementById('customAchDiff').value) || 1;
+
+            if (!name) {
+                alert(getTranslation("customAchFillAlert"));
+                return;
+            }
+
+            const newAch = {
+                id: Date.now(),
+                name: name.slice(0, 30),
+                desc: desc.slice(0, 60),
+                diff,
+                done: false
+            };
+
+            appState.customAchievements.push(newAch);
+            saveState();
+            closeCustomAchModal();
+            updateUI();
+
+            showNotification(getTranslation("customAchTitle"), name, "🌟");
+        }
+
+        function toggleCustomAch(id) {
+            const ach = appState.customAchievements.find(c => c.id === id);
+            if (!ach) return;
+            ach.done = !ach.done;
+            
+            if (ach.done) {
+                showNotification(getTranslation("unlockAchToastTitle"), ach.name, "🌟");
+            }
+            saveState();
+            updateUI();
+        }
+
+        function deleteCustomAch(id) {
+            appState.customAchievements = appState.customAchievements.filter(c => c.id !== id);
+            saveState();
+            updateUI();
+        }
+
+        // --- 17. Image Exporter Share-Card Generator ---
+        function truncateToWidth(ctx, text, maxWidth) {
+            let t = text;
+            let w = ctx.measureText(t).width;
+            if (w <= maxWidth) return t;
+            while (w > maxWidth && t.length > 0) {
+                t = t.substring(0, t.length - 1);
+                w = ctx.measureText(t + '…').width;
+            }
+            return t + '…';
+        }
+
+        function generateShareCard() {
+            const backdrop = document.getElementById('shareModalBackdrop');
+            const canvas = document.getElementById('sharingPreviewCanvas');
+            const ctx = canvas.getContext('2d');
+
+            if (typeof ctx.roundRect !== 'function') {
+                ctx.roundRect = function (x, y, w, h, r) {
+                    if (typeof r === 'number') r = [r, r, r, r];
+                    else if (Array.isArray(r)) {
+                        if (r.length === 1) r = [r[0], r[0], r[0], r[0]];
+                        else if (r.length === 2) r = [r[0], r[1], r[0], r[1]];
+                        else if (r.length === 3) r = [r[0], r[1], r[2], r[1]];
+                    } else r = [0, 0, 0, 0];
+                    this.beginPath();
+                    this.moveTo(x + r[0], y);
+                    this.lineTo(x + w - r[1], y);
+                    this.quadraticCurveTo(x + w, y, x + w, y + r[1]);
+                    this.lineTo(x + w, y + h - r[2]);
+                    this.quadraticCurveTo(x + w, y + h, x + w - r[2], y + h);
+                    this.lineTo(x + r[3], y + h);
+                    this.quadraticCurveTo(x, y + h, x, y + h - r[3]);
+                    this.lineTo(x, y + r[0]);
+                    this.quadraticCurveTo(x, y, x + r[0], y);
+                    this.closePath();
+                    return this;
+                };
+            }
+
+            const isDark = appState.theme !== 'light';
+            
+            // Draw background card canvas
+            if (isDark) {
+                const grad = ctx.createRadialGradient(400, 600, 100, 400, 600, 700);
+                grad.addColorStop(0, '#161b22');
+                grad.addColorStop(1, '#0d1117');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 800, 1200);
+
+                ctx.strokeStyle = '#30363d';
+                ctx.lineWidth = 10;
+                ctx.strokeRect(10, 10, 780, 1180);
+                ctx.strokeStyle = '#58a6ff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(20, 20, 760, 1160);
+            } else {
+                ctx.fillStyle = '#f6f8fa';
+                ctx.fillRect(0, 0, 800, 1200);
+                
+                ctx.strokeStyle = '#d0d7de';
+                ctx.lineWidth = 10;
+                ctx.strokeRect(10, 10, 780, 1180);
+                ctx.strokeStyle = '#0969da';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(20, 20, 760, 1160);
+            }
+
+            // Titles
+            ctx.font = 'bold 36px sans-serif';
+            ctx.fillStyle = isDark ? '#ffffff' : '#24292f';
+            ctx.textAlign = 'center';
+            ctx.fillText(getTranslation("shareCardTitle"), 400, 80);
+            
+            ctx.font = '800 14px sans-serif';
+            ctx.fillStyle = isDark ? '#58a6ff' : '#0969da';
+            ctx.fillText('DEVELOPER ACHIEVEMENT CARD', 400, 115);
+
+            ctx.beginPath();
+            ctx.moveTo(60, 140);
+            ctx.lineTo(740, 140);
+            ctx.strokeStyle = isDark ? '#30363d' : '#d0d7de';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Avatar & Name
+            ctx.font = '80px sans-serif';
+            ctx.fillText(appState.playerAvatar, 140, 230);
+
+            ctx.textAlign = 'left';
+            ctx.font = 'bold 28px sans-serif';
+            ctx.fillStyle = isDark ? '#ffffff' : '#24292f';
+            ctx.fillText(truncateToWidth(ctx, appState.playerName, 225), 230, 195);
+            
+            const cardTotals = getAchievementTotals();
+            const lvlDetails = getLevelDetails(cardTotals.completed);
+            ctx.font = 'bold 16px sans-serif';
+            ctx.fillStyle = isDark ? '#f1c40f' : '#bf8700';
+            const levelLabel = getTranslation("levelLabel");
+            ctx.fillText(`${levelLabel} ${lvlDetails.level} • ${lvlDetails.title}`, 230, 235);
+
+            // Right Info Stats Panel
+            ctx.fillStyle = isDark ? '#161b22' : '#ffffff';
+            ctx.strokeStyle = isDark ? '#30363d' : '#d0d7de';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(470, 160, 270, 95, 12);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillStyle = isDark ? '#8b949e' : '#57606a';
+            ctx.fillText(getTranslation("totalUnlockRateLabel"), 535, 195);
+            ctx.fillText(getTranslation("techStackLabel"), 675, 195);
+
+            ctx.font = 'bold 24px sans-serif';
+            ctx.fillStyle = isDark ? '#58a6ff' : '#0969da';
+            const achPct = Math.round((cardTotals.completed / cardTotals.total) * 100);
+            const techPct = Math.round((appState.masteredTech.length / 22) * 100);
+            ctx.fillText(`${achPct}%`, 535, 230);
+            ctx.fillText(`${techPct}%`, 675, 230);
+
+            ctx.beginPath();
+            ctx.moveTo(60, 290);
+            ctx.lineTo(740, 290);
+            ctx.strokeStyle = isDark ? '#30363d' : '#d0d7de';
+            ctx.stroke();
+
+            // Radar Chart Drawing
+            ctx.textAlign = 'left';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillStyle = isDark ? '#c9d1d9' : '#24292f';
+            ctx.fillText(getTranslation("radarChartTitleLabel"), 60, 330);
+
+            drawRadar(ctx, 220, 510, 100, {
+                gridColor: isDark ? 'rgba(48, 54, 61, 0.5)' : 'rgba(208, 215, 222, 0.8)',
+                axisColor: isDark ? 'rgba(48, 54, 61, 0.7)' : 'rgba(208, 215, 222, 1)',
+                labelColor: isDark ? '#c9d1d9' : '#24292f',
+                polyFill: isDark ? 'rgba(88, 166, 255, 0.25)' : 'rgba(9, 105, 218, 0.2)',
+                polyStroke: isDark ? '#58a6ff' : '#0969da',
+                labelFont: 'bold 14px sans-serif',
+                labelDist: 124
+            });
+
+            // Badge Walls Drawing
+            ctx.textAlign = 'left';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillStyle = isDark ? '#c9d1d9' : '#24292f';
+            ctx.fillText(getTranslation("badgeWallTitleLabel"), 430, 330);
+
+            let bx = 430, by = 360;
+            let count = 0;
+            badgeData.forEach(badge => {
+                const stat = getBadgeProgress(badge.id);
+                
+                ctx.save();
+                if (!stat.unlocked) {
+                    ctx.globalAlpha = 0.15;
+                }
+                
+                ctx.fillStyle = isDark ? '#161b22' : '#ffffff';
+                ctx.strokeStyle = stat.unlocked ? (isDark ? '#f1c40f' : '#bf8700') : (isDark ? '#30363d' : '#d0d7de');
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(bx + 25, by + 25, 25, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.font = '28px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(badge.emoji, bx + 25, by + 27);
+                
+                ctx.restore();
+
+                bx += 65;
+                count++;
+                if (count % 5 === 0) {
+                    bx = 430;
+                    by += 65;
+                }
+            });
+
+            // Divider Line
+            ctx.beginPath();
+            ctx.moveTo(60, 680);
+            ctx.lineTo(740, 680);
+            ctx.strokeStyle = isDark ? '#30363d' : '#d0d7de';
+            ctx.stroke();
+
+            // Proudest Achievements Showcase (top 3)
+            ctx.textAlign = 'left';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillStyle = isDark ? '#c9d1d9' : '#24292f';
+            ctx.fillText(getTranslation("showcaseTitleLabel"), 60, 720);
+
+            const unlockedAchs = achievementsData.filter(a => appState.checkedAchievements.includes(a.id))
+                .concat(appState.customAchievements.filter(c => c.done).map(c => ({ ...c, rarity: 'Custom', cat: '自訂' })));
+            unlockedAchs.sort((a, b) => b.diff - a.diff || b.id - a.id);
+            const showcase = unlockedAchs.slice(0, 3);
+
+            let achY = 760;
+            for (let i = 0; i < 3; i++) {
+                ctx.fillStyle = isDark ? '#161b22' : '#ffffff';
+                ctx.strokeStyle = isDark ? '#30363d' : '#d0d7de';
+                ctx.beginPath();
+                ctx.roundRect(60, achY, 680, 100, 12);
+                ctx.fill();
+                ctx.stroke();
+
+                if (showcase[i]) {
+                    const ach = showcase[i];
+                    ctx.font = 'bold 18px sans-serif';
+                    ctx.fillStyle = isDark ? '#ffffff' : '#24292f';
+                    const achName = appState.language === 'en' ? (ach.nameEn || ach.name) : ach.name;
+                    ctx.fillText(truncateToWidth(ctx, achName, 215), 90, achY + 40);
+
+                    const starsText = '★'.repeat(ach.diff) + '☆'.repeat(5 - Math.min(ach.diff, 5));
+                    ctx.font = '12px sans-serif';
+                    ctx.fillStyle = isDark ? '#f1c40f' : '#bf8700';
+                    ctx.fillText(starsText, 90, achY + 75);
+
+                    ctx.font = 'bold 10px sans-serif';
+                    ctx.fillStyle = isDark ? '#3fb950' : '#1a7f37';
+                    const rarityLabel = ach.rarity === 'Custom' ? getTranslation("customAchLabel") : ach.rarity;
+                    ctx.fillText(`[${rarityLabel.toUpperCase()}]`, 220, achY + 74);
+
+                    ctx.font = '13px sans-serif';
+                    ctx.fillStyle = isDark ? '#8b949e' : '#57606a';
+                    const achDesc = appState.language === 'en' ? (ach.descEn || ach.desc) : ach.desc;
+                    ctx.fillText(truncateToWidth(ctx, achDesc || getTranslation("customAchDefaultDesc"), 400), 320, achY + 40);
+                    const catLabel = getTranslation("catLabel");
+                    const catName = getCategoryTranslation(ach.cat);
+                    ctx.fillText(`${catLabel}${catName}`, 320, achY + 70);
+                } else {
+                    ctx.font = 'italic 15px sans-serif';
+                    ctx.fillStyle = isDark ? '#8b949e' : '#8c959f';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(getTranslation("showcaseEmptyLabel"), 400, achY + 55);
+                    ctx.textAlign = 'left';
+                }
+                achY += 120;
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(60, 1120);
+            ctx.lineTo(740, 1120);
+            ctx.strokeStyle = isDark ? '#30363d' : '#d0d7de';
+            ctx.stroke();
+
+            // Footer credits in share card
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillStyle = isDark ? '#8b949e' : '#8c959f';
+            ctx.textAlign = 'left';
+            ctx.fillText(getTranslation("shareCardFooter"), 60, 1150);
+            
+            ctx.textAlign = 'right';
+            ctx.fillText('github.com/ivanusto', 740, 1150);
+
+            backdrop.style.display = 'flex';
+        }
+
+        function closeShareModal() {
+            document.getElementById('shareModalBackdrop').style.display = 'none';
+        }
+
+        function triggerCardDownload() {
+            const canvas = document.getElementById('sharingPreviewCanvas');
+            const a = document.createElement('a');
+            a.href = canvas.toDataURL('image/png');
+            a.download = `engineer_achievement_${appState.playerName}.png`;
+            a.click();
+        }
+
+        function downloadShareCard() {
+            triggerCardDownload();
+            closeShareModal();
+            const title = getTranslation("shareCardNotifyTitle");
+            const desc = getTranslation("shareCardNotifyDesc");
+            showNotification(title, desc, "📸");
+        }
+
+        // --- 18. Social Share Intents ---
+        const SHARE_URL = window.location.href;
+
+        function buildShareText() {
+            const totals = getAchievementTotals();
+            const techCount = appState.masteredTech.length;
+            const lang = appState.language || 'zh-TW';
+            if (lang === 'en') {
+                return `I unlocked ${totals.completed}/${totals.total} developer achievements and lit up ${techCount}/22 tech stack nodes! Challenge your engineering achievements here:`;
+            }
+            return `我在「開發者成就系統」解鎖了 ${totals.completed}/${totals.total} 項成就、點亮 ${techCount}/22 大技術領域！快來挑戰你的程式修仙足跡 ✨`;
+        }
+
+        function shareToSocial(platform) {
+            const text = buildShareText();
+            let shareLink = '';
+
+            switch (platform) {
+                case 'x':
+                    shareLink = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(SHARE_URL)}`;
+                    break;
+                case 'threads':
+                    shareLink = `https://www.threads.net/intent/post?text=${encodeURIComponent(text + ' ' + SHARE_URL)}`;
+                    break;
+                case 'facebook':
+                    shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(SHARE_URL)}&quote=${encodeURIComponent(text)}`;
+                    break;
+            }
+
+            if (shareLink) window.open(shareLink, '_blank');
+        }
+
+        // --- 19. Avatar Selection Handlers ---
+        let avatarTarget = 'profile';
+
+        function openAvatarPicker(target) {
+            avatarTarget = target || 'profile';
+            const backdrop = document.getElementById('avatarPickerBackdrop');
+            const grid = document.getElementById('avatarPickerGrid');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            avatars.forEach(emoji => {
+                const opt = document.createElement('div');
+                opt.className = 'avatar-option';
+                opt.textContent = emoji;
+                opt.onclick = () => selectAvatar(emoji);
+                grid.appendChild(opt);
+            });
+
+            backdrop.style.display = 'flex';
+        }
+
+        function closeAvatarPicker() {
+            document.getElementById('avatarPickerBackdrop').style.display = 'none';
+        }
+
+        function selectAvatar(emoji) {
+            if (avatarTarget === 'profile') {
+                appState.playerAvatar = emoji;
+                document.getElementById('playerAvatar').textContent = emoji;
+                saveState();
+                showNotification(getTranslation("avatarUpdated"), emoji, "👤");
+            } else {
+                document.getElementById('registerAvatar').textContent = emoji;
+            }
+            closeAvatarPicker();
+        }
+
+        // --- 20. Main UI Synchronization Manager ---
+        function getAchievementTotals() {
+            const officialCount = achievementsData.length;
+            const officialCompleted = appState.checkedAchievements.length;
+            
+            const customCount = appState.customAchievements.length;
+            const customCompleted = appState.customAchievements.filter(c => c.done).length;
+
+            return {
+                completed: officialCompleted + customCompleted,
+                total: officialCount + customCount
+            };
+        }
+
+        function savePlayerName(val) {
+            appState.playerName = val.trim() || getTranslation("defaultPlayerName");
+            saveState();
+        }
+
+        function toggleTheme() {
+            if (appState.theme === 'light') {
+                appState.theme = 'dark';
+            } else {
+                appState.theme = 'light';
+            }
+            document.documentElement.setAttribute('data-theme', appState.theme);
+            const themeBtnText = document.getElementById('themeToggleText');
+            if (themeBtnText) {
+                themeBtnText.textContent = appState.theme === 'light' ? getTranslation("themeToggleTextDark") : getTranslation("themeToggleTextLight");
+            }
+            saveState();
+            renderRadarChart();
+        }
+
+        function changeLanguage(lang) {
+            appState.language = lang;
+            saveState();
+            
+            const currentName = document.getElementById('playerName').value;
+            if (currentName === "開發者工程師" || currentName === "Developer Engineer") {
+                const defaultName = getTranslation("defaultPlayerName");
+                appState.playerName = defaultName;
+                document.getElementById('playerName').value = defaultName;
+            }
+
+            buildAchievements();
+            renderTechMap();
+            updateUI();
+        }
+
+        function submitRegister() {
+            const nameInput = document.getElementById('registerPlayerName').value.trim();
+            const emoji = document.getElementById('registerAvatar').textContent;
+
+            if (!nameInput) {
+                alert(getTranslation("pleaseEnterNickname"));
+                return;
+            }
+
+            appState.playerName = nameInput.slice(0, 15);
+            appState.playerAvatar = emoji;
+            appState.registered = true;
+            
+            document.getElementById('playerName').value = appState.playerName;
+            document.getElementById('playerAvatar').textContent = appState.playerAvatar;
+
+            saveState();
+            document.getElementById('registerModalBackdrop').style.display = 'none';
+            
+            updateUI();
+
+            const title = getTranslation("regSuccessTitle");
+            const desc = getTranslation("regSuccessDesc").replace("{name}", appState.playerName);
+            showNotification(title, desc, "🎮");
+        }
+
+        function updateUI() {
+            updateStaticTranslations();
+
+            const totals = getAchievementTotals();
+            const lvlDetails = getLevelDetails(totals.completed);
+            
+            document.getElementById('playerLevelDisplay').textContent = `LV ${lvlDetails.level}`;
+            document.getElementById('playerTitle').textContent = lvlDetails.title;
+
+            const xpCurrent = totals.completed % 10;
+            const suffix = getTranslation("xpDisplaySuffix");
+            document.getElementById('playerXpDisplay').textContent = `${xpCurrent} / 10 ${suffix}`;
+            
+            const xpPercent = Math.min(100, Math.round((xpCurrent / 10) * 100));
+            document.getElementById('playerXpBar').style.width = `${xpPercent}%`;
+
+            renderBadgeWall();
+            updateTechMap();
+            renderCustomAchievements();
+            renderRadarChart();
+            if (typeof updateAchievementsUI === "function") updateAchievementsUI();
+        }
+
+        // --- 21. App Startup ---
+        window.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            buildAchievements();
+            renderTechMap();
+            updateUI();
+        });
+    </script>
+</body>
+</html>

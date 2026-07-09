@@ -1,0 +1,14 @@
+# System & Environment Files
+.gemini/
+.agents/
+.DS_Store
+Thumbs.db
+*.log
+
+# Python / Scripts
+__pycache__/
+*.py[cod]
+*$py.class
+scratch/
+temp_*.js
+temp_*.py
