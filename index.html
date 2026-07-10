@@ -1616,6 +1616,9 @@
     <script>
         // Global error logger for easier debugging
         window.onerror = function(message, source, lineno, colno, error) {
+            if (message === 'Script error.' || !source || lineno === 0) {
+                return false; // Ignore third-party / browser extension errors
+            }
             const errDiv = document.createElement('div');
             errDiv.style.position = 'fixed';
             errDiv.style.top = '0';
