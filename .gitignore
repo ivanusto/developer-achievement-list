@@ -12,3 +12,6 @@ __pycache__/
 scratch/
 temp_*.js
 temp_*.py
+
+# Claude Code per-user permissions (may contain secrets)
+.claude/settings.local.json
